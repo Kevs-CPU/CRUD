@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 const LISTS = [
   { id: "all",      name: "All Lists",  icon: "home",    special: true },
   { id: "default",  name: "Default",    icon: "list" },
-  { id: "work",     name: "Tasks ",      icon: "list" },
+  { id: "tasks",    name: "Tasks",      icon: "list" }, 
   { id: "personal", name: "Personal",   icon: "list" },
   { id: "shopping", name: "Shopping",   icon: "list" },
   { id: "work",     name: "Work",       icon: "list" },
@@ -15,10 +15,8 @@ const INIT_TASKS = [
   { id: 2, text: "Read a book",           list: "personal", done: false },
   { id: 3, text: "Finish project report", list: "work",      done: true  },
   { id: 4, text: "Pay utility bills",     list: "default",  done: false },
-  { id: 5, text: "Buy new headphones",    list: "wishlist", done: false },
 ];
 
-// ── Icons ─────────────────────────────────────────────────────────────────
 function IconHome() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -28,6 +26,7 @@ function IconHome() {
     </svg>
   );
 }
+
 function IconList() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -41,6 +40,7 @@ function IconList() {
     </svg>
   );
 }
+
 function IconCheck() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -50,6 +50,7 @@ function IconCheck() {
     </svg>
   );
 }
+
 function IconSearch() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -59,6 +60,7 @@ function IconSearch() {
     </svg>
   );
 }
+
 function IconEdit() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -68,6 +70,7 @@ function IconEdit() {
     </svg>
   );
 }
+
 function IconTrash() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -79,6 +82,7 @@ function IconTrash() {
     </svg>
   );
 }
+
 function IconSave() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"
@@ -87,6 +91,7 @@ function IconSave() {
     </svg>
   );
 }
+
 function IconX() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
@@ -103,7 +108,38 @@ function ListIcon({ type }) {
   return <IconList />;
 }
 
-// ── App ───────────────────────────────────────────────────────────────────
+function Sidebar({ sidebarOpen, activeList, selectList, getBadge }) {
+  return (
+    <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
+      <div className="sidebar-header">
+        <div className="sidebar-logo">
+          <IconCheck />
+        </div>
+        <div className="sidebar-title">To Do List</div>
+        <div className="sidebar-sub">by Splend Apps</div>
+      </div>
+
+      <div className="list-section">
+        <div className="list-section-label">Task Lists</div>
+        {LISTS.map(l => {
+          const badge = getBadge(l.id);
+          return (
+            <button
+              key={l.id}
+              className={`list-item${activeList === l.id ? " active" : ""}`}
+              onClick={() => selectList(l.id)}
+            >
+              <span className="list-item-icon"><ListIcon type={l.icon} /></span>
+              <span className="list-name">{l.name}</span>
+              {badge > 0 && <span className="list-badge">{badge}</span>}
+            </button>
+          );
+        })}
+      </div>
+    </aside>
+  );
+}
+
 export default function App() {
   const [tasks, setTasks] = useState(
     () => JSON.parse(localStorage.getItem("todo_ml_v3")) ?? INIT_TASKS
@@ -136,7 +172,6 @@ export default function App() {
     if (showSearch) searchRef.current?.focus();
   }, [showSearch]);
 
-  // ── Derived ──────────────────────────────────────────────────────────────
   const getBadge = (listId) => {
     if (listId === "all")      return tasks.filter(t => !t.done).length;
     if (listId === "finished") return tasks.filter(t =>  t.done).length;
@@ -157,7 +192,6 @@ export default function App() {
   const activeInfo  = LISTS.find(l => l.id === activeList);
   const remaining   = getBadge(activeList);
 
-  // ── Handlers ─────────────────────────────────────────────────────────────
   const addTask = () => {
     const text = input.trim();
     if (!text) return;
@@ -169,8 +203,11 @@ export default function App() {
   const toggleDone = (id) => {
     const t = tasks.find(t => t.id === id);
     if (!t) return;
-    if (!t.done) setUndoItem({ id, text: t.text });
-    else if (undoItem?.id === id) setUndoItem(null);
+    if (!t.done) {
+      setUndoItem({ id, text: t.text });
+    } else if (undoItem?.id === id) {
+      setUndoItem(null);
+    }
     setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
   };
 
@@ -190,9 +227,9 @@ export default function App() {
 
   const handleUndo = () => {
     if (!undoItem) return;
+    clearTimeout(undoTimer.current);
     setTasks(prev => prev.map(t => t.id === undoItem.id ? { ...t, done: false } : t));
     setUndoItem(null);
-    clearTimeout(undoTimer.current);
   };
 
   const selectList = (id) => {
@@ -203,48 +240,20 @@ export default function App() {
     setSidebarOpen(false);
   };
 
-  // ── Sidebar ───
-  const Sidebar = () => (
-    <aside className={`sidebar${sidebarOpen ? " open" : ""}`}>
-      <div className="sidebar-header">
-        <div className="sidebar-logo">
-          <IconCheck />
-        </div>
-        <div className="sidebar-title">To Do List</div>
-        <div className="sidebar-sub">by Splend Apps</div>
-      </div>
-
-      <div className="list-section">
-        <div className="list-section-label">Task Lists</div>
-        {LISTS.map(l => {
-          const badge = getBadge(l.id);
-          return (
-            <button
-              key={l.id}
-              className={`list-item${activeList === l.id ? " active" : ""}`}
-              onClick={() => selectList(l.id)}
-            >
-              <span className="list-item-icon"><ListIcon type={l.icon} /></span>
-              <span className="list-name">{l.name}</span>
-              {badge > 0 && <span className="list-badge">{badge}</span>}
-            </button>
-          );
-        })}
-      </div>
-    </aside>
-  );
-
-  // ── Main ──
   return (
     <div className="app-layout">
-      <Sidebar />
+      <Sidebar 
+        sidebarOpen={sidebarOpen} 
+        activeList={activeList} 
+        selectList={selectList} 
+        getBadge={getBadge} 
+      />
 
       {sidebarOpen && (
         <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
       )}
 
       <div className="main-wrapper">
-        {/* Header */}
         <header className="main-header">
           <button
             className="menu-btn"
@@ -271,7 +280,6 @@ export default function App() {
           </button>
         </header>
 
-        {/* Search bar */}
         {showSearch && (
           <div className="search-bar">
             <input
@@ -284,7 +292,6 @@ export default function App() {
           </div>
         )}
 
-        {/* Add row */}
         <div className="add-row">
           <input
             className="add-input"
@@ -307,24 +314,19 @@ export default function App() {
           <button className="add-btn" onClick={addTask}>Add</button>
         </div>
 
-        {/* Task list */}
         <ul className="task-list">
           {visibleTasks.length === 0 && (
             <li className="empty-state">
-              <span className="empty-icon">
-                {activeList === "finished"}
-              </span>
               <span>
                 {activeList === "finished"
                   ? "No completed tasks yet."
-                  : "All clear enjoy your day!"}
+                  : "All clear, enjoy your day!"}
               </span>
             </li>
           )}
 
           {visibleTasks.map(todo => (
             <li key={todo.id} className={`task-item${todo.done ? " done" : ""}`}>
-              {/* Check button */}
               <button
                 className={`check-btn${todo.done ? " checked" : ""}`}
                 onClick={() => toggleDone(todo.id)}
@@ -338,7 +340,6 @@ export default function App() {
                 )}
               </button>
 
-              {/* Content */}
               <div className="task-content">
                 {editId === todo.id ? (
                   <input
@@ -365,7 +366,6 @@ export default function App() {
                 )}
               </div>
 
-              {/* Actions */}
               <div className="task-actions">
                 {editId === todo.id ? (
                   <>
@@ -391,7 +391,6 @@ export default function App() {
           ))}
         </ul>
 
-        {/* Toast */}
         <div className={`toast-wrapper${undoItem ? " visible" : ""}`}>
           {undoItem && (
             <div className="toast">

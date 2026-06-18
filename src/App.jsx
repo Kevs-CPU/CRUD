@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { taskAdded, taskToggled, taskDeleted, taskEdited } from "./features/tasks/tasksSlice";
 
 const LISTS = [
   { id: "all",      name: "All Lists",  icon: "home",    special: true },
@@ -8,13 +10,6 @@ const LISTS = [
   { id: "shopping", name: "Shopping",   icon: "list" },
   { id: "work",     name: "Work",       icon: "list" },
   { id: "finished", name: "Finished",   icon: "check",   special: true },
-];
-
-const INIT_TASKS = [
-  { id: 1, text: "Buy groceries",         list: "shopping", done: false },
-  { id: 2, text: "Read a book",           list: "personal", done: false },
-  { id: 3, text: "Finish project report", list: "work",      done: true  },
-  { id: 4, text: "Pay utility bills",     list: "default",  done: false },
 ];
 
 function IconHome() {
@@ -141,9 +136,13 @@ function Sidebar({ sidebarOpen, activeList, selectList, getBadge }) {
 }
 
 export default function App() {
-  const [tasks, setTasks] = useState(
-    () => JSON.parse(localStorage.getItem("todo_ml_v3")) ?? INIT_TASKS
-  );
+  // Dati: const [tasks, setTasks] = useState(() => JSON.parse(...) ?? INIT_TASKS)
+  // Ngayon: kumukuha tayo ng tasks mula sa Redux store gamit ang useSelector.
+  const tasks = useSelector((state) => state.tasks);
+  const dispatch = useDispatch();
+
+  // Ang mga ito ay UI-only state, hindi sila ginagalaw — nananatili sa useState
+  // dahil walang ibang component na nangangailangan makita ang mga ito.
   const [activeList, setActiveList] = useState("all");
   const [input, setInput]           = useState("");
   const [addList, setAddList]       = useState("default");
@@ -156,9 +155,8 @@ export default function App() {
   const undoTimer = useRef(null);
   const searchRef = useRef(null);
 
-  useEffect(() => {
-    localStorage.setItem("todo_ml_v3", JSON.stringify(tasks));
-  }, [tasks]);
+  // TINANGGAL: ang useEffect na nag-save ng tasks sa localStorage —
+  // ginagawa na ito ngayon ng store.subscribe() sa loob ng store.js
 
   useEffect(() => {
     if (undoItem) {
@@ -192,14 +190,16 @@ export default function App() {
   const activeInfo  = LISTS.find(l => l.id === activeList);
   const remaining   = getBadge(activeList);
 
+  // dati: setTasks(prev => [...prev, { id: Date.now(), text, list: targetList, done: false }])
   const addTask = () => {
     const text = input.trim();
     if (!text) return;
     const targetList = isMultiView ? addList : activeList;
-    setTasks(prev => [...prev, { id: Date.now(), text, list: targetList, done: false }]);
+    dispatch(taskAdded(text, targetList));
     setInput("");
   };
 
+  // dati: setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t))
   const toggleDone = (id) => {
     const t = tasks.find(t => t.id === id);
     if (!t) return;
@@ -208,27 +208,31 @@ export default function App() {
     } else if (undoItem?.id === id) {
       setUndoItem(null);
     }
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, done: !t.done } : t));
+    dispatch(taskToggled(id));
   };
 
+  // dati: setTasks(prev => prev.filter(t => t.id !== id))
   const deleteTask = (id) => {
     if (undoItem?.id === id) setUndoItem(null);
     if (editId === id) cancelEdit();
-    setTasks(prev => prev.filter(t => t.id !== id));
+    dispatch(taskDeleted(id));
   };
 
   const startEdit  = (t) => { setEditId(t.id); setEditText(t.text); };
   const cancelEdit = ()  => { setEditId(null); setEditText(""); };
+
+  // dati: setTasks(prev => prev.map(t => t.id === id ? { ...t, text: editText.trim() } : t))
   const saveEdit   = (id) => {
     if (!editText.trim()) return cancelEdit();
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, text: editText.trim() } : t));
+    dispatch(taskEdited({ id, text: editText.trim() }));
     cancelEdit();
   };
 
+  // dati: setTasks(prev => prev.map(t => t.id === undoItem.id ? { ...t, done: false } : t))
   const handleUndo = () => {
     if (!undoItem) return;
     clearTimeout(undoTimer.current);
-    setTasks(prev => prev.map(t => t.id === undoItem.id ? { ...t, done: false } : t));
+    dispatch(taskToggled(undoItem.id));
     setUndoItem(null);
   };
 

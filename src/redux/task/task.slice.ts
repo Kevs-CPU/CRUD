@@ -9,8 +9,8 @@ import { GetTaskUseCase } from "../../usecases/getTaskUseCase";
 interface Task {
   id: string;
   title: string;
-            list: string; //_____________________________
-            done: boolean; //____________________________}
+  list: string; 
+  done: boolean;
 }
 
 interface TaskState {
@@ -31,8 +31,8 @@ const repo = () => getTaskRepository();
 const toPlainTask = (t: any): Task => ({
   id: t.id,
   title: t.title,
-                      list: t.list,//___________________________
-                      done: t.done,//___________________________}
+  list: t.list,
+  done: t.done,
 });
 
 export const fetchTasks = createAsyncThunk(

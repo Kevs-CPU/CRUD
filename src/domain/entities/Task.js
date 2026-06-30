@@ -3,7 +3,5 @@ export class Task {
     
     this.id = id;
     this.title = title;
-                            //this.list = list; 
-                            //this.done = done; 
   }
 }

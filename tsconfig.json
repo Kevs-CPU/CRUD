@@ -10,7 +10,18 @@
     "strict": true,
     "jsx": "react-jsx",
     "noEmit": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "ignoreDeprecations": "6.0", 
+    
+    
+    "paths": {
+      "@/*": ["./src/*"],
+      "@app/*": ["./src/app/*"],
+      "@data/*": ["./src/data/*"],
+      "@domain/*": ["./src/domain/*"],
+      "@presentation/*": ["./src/presentation/*"],
+      "@redux/*": ["./src/redux/*"]
+    }
   },
   "include": ["src"]
 }

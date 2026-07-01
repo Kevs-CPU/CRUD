@@ -5,18 +5,11 @@ import { Task } from "../../domain/entities/Task";
 export class InMemoryTaskRepository extends ITaskRepository {
   constructor(initialTasks = []) {
     super();
-    this.tasks = initialTasks.map((t) => {
-      const task = new Task(t);
-      task.list = t.list || "default";
-      task.done = t.done || false;
-      return task;
-    });
+    this.tasks = initialTasks.map((t) => new Task(t));
   }
 
-  addTask({ title, list }) {
+  addTask({ title }) {
     const task = new Task({ id: nanoid(), title });
-    task.list = list || "default";
-    task.done = false;
     this.tasks.push(task);
     return task;
   }

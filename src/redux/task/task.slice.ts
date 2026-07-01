@@ -9,15 +9,12 @@ import { get_task_usecase } from "../../usecases/get_task_usecase";
 interface Task {
   id: string;
   title: string;
-  list: string; 
-  done: boolean;
 }
 
 interface TaskState {
   tasks: Task[];
   loading: boolean;
   error: string | null;
-  
 }
 
 const initialState: TaskState = {
@@ -31,8 +28,6 @@ const repo = () => getTaskRepository();
 const toPlainTask = (t: any): Task => ({
   id: t.id,
   title: t.title,
-  list: t.list,
-  done: t.done,
 });
 
 export const fetchTasks = createAsyncThunk(
@@ -50,7 +45,7 @@ export const fetchTasks = createAsyncThunk(
 
 export const addTask = createAsyncThunk(
   "tasks/add",
-  async (payload: { title: string; list: string }, { rejectWithValue }) => {
+  async (payload: { title: string }, { rejectWithValue }) => {
     try {
       const usecase = new add_task_UseCase(repo());
       const result = await usecase.execute(payload);
@@ -80,23 +75,6 @@ export const updateTask = createAsyncThunk(
     try {
       const usecase = new update_task_usecase(repo());
       const result = await usecase.execute(payload.id, { title: payload.title });
-      return toPlainTask(result);
-    } catch (err: any) {
-      return rejectWithValue(err.message);
-    }
-  }
-);
-
-export const toggleTask = createAsyncThunk(
-  "tasks/toggle",
-  async (id: string, { rejectWithValue }) => {
-    try {
-      const getUsecase = new get_task_usecase(repo());
-      const current = await getUsecase.execute(id);
-      if (!current) throw new Error("Task not found");
-
-      const updateUsecase = new update_task_usecase(repo());
-      const result = await updateUsecase.execute(id, { done: !current.done });
       return toPlainTask(result);
     } catch (err: any) {
       return rejectWithValue(err.message);
@@ -164,18 +142,6 @@ const taskSlice = createSlice({
       })
       .addCase(updateTask.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload as string;
-      })
-
-      // toggleTask
-      .addCase(toggleTask.pending, (state) => {
-        state.error = null;
-      })
-      .addCase(toggleTask.fulfilled, (state, action) => {
-        const i = state.tasks.findIndex((t) => t.id === action.payload.id);
-        if (i !== -1) state.tasks[i] = action.payload;
-      })
-      .addCase(toggleTask.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

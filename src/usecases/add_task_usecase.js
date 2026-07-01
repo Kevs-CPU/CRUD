@@ -3,11 +3,11 @@ export class add_task_UseCase {
     this.repository = repository;
   }
 
-  execute({ title, list }) {
+  execute({ title }) {
     const trimmed = title?.trim();
     if (!trimmed) {
       throw new Error("Task title cannot be empty");
     }
-    return this.repository.addTask({ title: trimmed, list });
+    return this.repository.addTask({ title: trimmed });
   }
 }

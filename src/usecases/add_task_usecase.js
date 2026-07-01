@@ -1,4 +1,4 @@
-export class AddTaskUseCase {
+export class add_task_UseCase {
   constructor(repository) {
     this.repository = repository;
   }

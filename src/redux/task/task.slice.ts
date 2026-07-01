@@ -1,10 +1,10 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { getTaskRepository } from '../../app/taskRepositoryProvider';
-import { AddTaskUseCase } from "../../usecases/addTaskUseCase";
-import { RemoveTaskUseCase } from "../../usecases/removeTaskUseCase";
-import { UpdateTaskUseCase } from "../../usecases/updateTaskUseCase";
-import { GetAllTasksUseCase } from "../../usecases/getAllTasksUseCase";
-import { GetTaskUseCase } from "../../usecases/getTaskUseCase";
+import { add_task_UseCase } from "../../usecases/add_task_usecase";
+import { remove_task_usecase } from "../../usecases/remove_task_usecase";
+import { update_task_usecase } from "../../usecases/update_task_usecase";
+import { get_all_tasks_usecase } from "../../usecases/get_all_tasks_usecase";
+import { get_task_usecase } from "../../usecases/get_task_usecase";
 
 interface Task {
   id: string;
@@ -39,7 +39,7 @@ export const fetchTasks = createAsyncThunk(
   "tasks/fetchAll",
   async (_, { rejectWithValue }) => {
     try {
-      const usecase = new GetAllTasksUseCase(repo());
+      const usecase = new get_all_tasks_usecase(repo());
       const tasks = await usecase.execute();
       return tasks.map(toPlainTask);
     } catch (err: any) {
@@ -52,7 +52,7 @@ export const addTask = createAsyncThunk(
   "tasks/add",
   async (payload: { title: string; list: string }, { rejectWithValue }) => {
     try {
-      const usecase = new AddTaskUseCase(repo());
+      const usecase = new add_task_UseCase(repo());
       const result = await usecase.execute(payload);
       return toPlainTask(result);
     } catch (err: any) {
@@ -65,7 +65,7 @@ export const removeTask = createAsyncThunk(
   "tasks/remove",
   async (id: string, { rejectWithValue }) => {
     try {
-      const usecase = new RemoveTaskUseCase(repo());
+      const usecase = new remove_task_usecase(repo());
       await usecase.execute(id);
       return id;
     } catch (err: any) {
@@ -78,7 +78,7 @@ export const updateTask = createAsyncThunk(
   "tasks/update",
   async (payload: { id: string; title: string }, { rejectWithValue }) => {
     try {
-      const usecase = new UpdateTaskUseCase(repo());
+      const usecase = new update_task_usecase(repo());
       const result = await usecase.execute(payload.id, { title: payload.title });
       return toPlainTask(result);
     } catch (err: any) {
@@ -91,11 +91,11 @@ export const toggleTask = createAsyncThunk(
   "tasks/toggle",
   async (id: string, { rejectWithValue }) => {
     try {
-      const getUsecase = new GetTaskUseCase(repo());
+      const getUsecase = new get_task_usecase(repo());
       const current = await getUsecase.execute(id);
       if (!current) throw new Error("Task not found");
 
-      const updateUsecase = new UpdateTaskUseCase(repo());
+      const updateUsecase = new update_task_usecase(repo());
       const result = await updateUsecase.execute(id, { done: !current.done });
       return toPlainTask(result);
     } catch (err: any) {

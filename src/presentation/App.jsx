@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchTasks,
-  addTask as addTaskAction,
+  addTask    as addTaskAction,
   removeTask as removeTaskAction,
   updateTask as updateTaskAction,
 } from "../redux/task/task.slice";
@@ -12,7 +12,6 @@ export default function App() {
   const tasks = useSelector((state) => state.tasks.tasks);
   const loading = useSelector((state) => state.tasks.loading);
   const dispatch = useDispatch();
-
   const [input, setInput] = useState("");
   const [editId, setEditId] = useState(null);
   const [editText, setEditText] = useState("");
@@ -50,24 +49,25 @@ export default function App() {
 
   return (
     <div className="app-layout">
-      <div className="main-wrapper">
-        <header className="main-header">
-          <div className="main-header-text">
-            <h1>To Do List</h1>
-            <p>{tasks.length} task{tasks.length !== 1 ? "s" : ""}</p>
-          </div>
-        </header>
-
-        <div className="add-row">
-          <input
+    <div className="main-wrapper">
+         <header className="main-header">
+    <div className="main-header-text">
+        
+        <h1>To Do List</h1>
+          <p>{tasks.length} task{tasks.length !== 1 ? "s" : ""}</p>
+            
+    </div>
+         </header >
+    <div className="add-row">
+        <input
             className="add-input"
             placeholder="Add a new task…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && addTask()}
-          />
+        />
           <button className="add-btn" onClick={addTask}>Add</button>
-        </div>
+    </div>
 
         <ul className="task-list">
           {loading && <li className="empty-state"><span>Loading…</span></li>}
@@ -78,48 +78,47 @@ export default function App() {
 
           {tasks.map((todo) => (
             <li key={todo.id} className="task-item">
-              <div className="task-content">
-                {editId === todo.id ? (
-                  <input
-                    className="edit-input"
-                    value={editText}
-                    onChange={(e) => setEditText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") saveEdit(todo.id);
-                      if (e.key === "Escape") resetEdit();
-                    }}
-                    autoFocus
-                  />
-                ) : (
-                  <span className="task-text">{todo.title}</span>
+    <div className="task-content">
+        {editId === todo.id ? (
+          <input
+            className="edit-input"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") saveEdit(todo.id);
+              if (e.key === "Escape") resetEdit();
+                }}
+                autoFocus
+          />
+              ) : (
+              <span className="task-text">{todo.title}</span>
                 )}
-              </div>
-
-              <div className="task-actions">
-                {editId === todo.id ? (
+    </div>
+    <div className="task-actions">
+        {editId === todo.id ? (
+            <>
+        <button className="icon-btn save-btn" onClick={() => saveEdit(todo.id)} aria-label="Save">
+            ✓
+        </button>
+        <button className="icon-btn" onClick={resetEdit} aria-label="Cancel">
+            ✕
+        </button>
+            </>
+              ) : (
                   <>
-                    <button className="icon-btn save-btn" onClick={() => saveEdit(todo.id)} aria-label="Save">
-                      ✓
-                    </button>
-                    <button className="icon-btn" onClick={resetEdit} aria-label="Cancel">
-                      ✕
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button className="icon-btn" onClick={() => startEdit(todo)} aria-label="Edit">
-                      ✎
-                    </button>
-                    <button className="icon-btn delete-btn" onClick={() => deleteTask(todo.id)} aria-label="Delete">
-                      🗑
-                    </button>
-                  </>
+        <button className="icon-btn" onClick={() => startEdit(todo)} aria-label="Edit">
+            ✎
+        </button>
+        <button className="icon-btn delete-btn" onClick={() => deleteTask(todo.id)} aria-label="Delete">
+            🗑
+        </button>
+            </>
                 )}
-              </div>
+    </div>
             </li>
           ))}
         </ul>
-      </div>
+    </div>
     </div>
   );
 }

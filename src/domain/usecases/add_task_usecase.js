@@ -10,4 +10,4 @@ export class add_task_UseCase {
     }
     return this.repository.addTask({ title: trimmed });
   }
-  }
+}

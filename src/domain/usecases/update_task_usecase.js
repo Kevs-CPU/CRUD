@@ -1,4 +1,4 @@
-export class update_task_usecase {
+export class UpdateTaskUseCase {
   constructor(repository) {
     this.repository = repository;
   }

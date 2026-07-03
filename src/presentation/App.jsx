@@ -61,6 +61,8 @@ export default function App() {
     <div className="add-row">
         <input
             className="add-input"
+            name="newTask"
+            id="newTask"
             placeholder="Add a new task…"
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -82,6 +84,8 @@ export default function App() {
         {editId === todo.id ? (
           <input
             className="edit-input"
+            name={`editTask-${todo.id}`}
+            id={`editTask-${todo.id}`}
             value={editText}
             onChange={(e) => setEditText(e.target.value)}
             onKeyDown={(e) => {

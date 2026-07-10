@@ -11,9 +11,9 @@
     "jsx": "react-jsx",
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
-    "ignoreDeprecations": "6.0", 
-    
-    
+    "ignoreDeprecations": "6.0",
+
+    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"],
       "@app/*": ["./src/app/*"],

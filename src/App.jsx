@@ -6,6 +6,7 @@ import {
   removeTask as removeTaskAction,
   updateTask as updateTaskAction,
 } from "./app/redux/task/task.slice";
+import TodoTable from "./app/components/todo/TodoTable";
 import "./App.css";
 
 export default function App() {

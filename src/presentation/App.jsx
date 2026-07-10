@@ -2,10 +2,10 @@ import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   fetchTasks,
-  addTask    as addTaskAction,
+  addTask as addTaskAction,
   removeTask as removeTaskAction,
   updateTask as updateTaskAction,
-} from "../redux/task/task.slice";
+} from "./redux/task/task.slice";
 import "./App.css";
 
 export default function App() {

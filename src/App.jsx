@@ -143,7 +143,7 @@ export default function App() {
                         style={{ flex: 1 }}
                         name={`editTask-${todo.id}`}
                         id={`editTask-${todo.id}`}
-                        placeholder="Add description…"
+                        placeholder="Add task…"
                         value={editText}
                         onChange={(e) => setEditText(e.target.value)}
                         onKeyDown={(e) => {

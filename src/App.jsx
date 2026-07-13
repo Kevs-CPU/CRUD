@@ -112,7 +112,7 @@ export default function App() {
             className={`add-input${inputError ? " add-input-error" : ""}`}
             name="newTask"
             id="newTask"
-            placeholder="Add a new task…"
+            placeholder="yourname@gmail.com"
             value={input}
             onChange={(e) => {
               setInput(e.target.value);

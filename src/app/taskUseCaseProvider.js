@@ -1,4 +1,3 @@
-import { getTaskRepository } from "./taskRepositoryProvider";
 import { AddTaskUseCase } from "../domain/usecases/add_task_usecase";
 import { RemoveTaskUseCase } from "../domain/usecases/remove_task_usecase";
 import { UpdateTaskUseCase } from "../domain/usecases/update_task_usecase";

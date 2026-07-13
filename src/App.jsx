@@ -10,7 +10,7 @@ import TodoTable from "./app/components/todo/TodoTable";
 import "./App.css";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "hotmail.com"];
+const VALID_DOMAINS = ["gmail.com"];
 
 export default function App() {
   const tasks = useSelector((state) => state.tasks.tasks);

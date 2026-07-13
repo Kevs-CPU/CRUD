@@ -1,10 +1,8 @@
 import { nanoid } from "@reduxjs/toolkit";
-import { ITaskRepository } from "../../domain/repositories/ITaskRepository";
 import { Task } from "../../domain/entities/Task";
 
-export class InMemoryTaskRepository extends ITaskRepository {
+export class InMemoryTaskRepository {
   constructor(initialTasks = []) {
-    super();
     this.tasks = initialTasks.map((t) => new Task(t));
   }
 

@@ -1,10 +1,9 @@
 import { nanoid } from "@reduxjs/toolkit";
-import { ITaskRepository } from "../../domain/repositories/ITaskRepository";
 import { Task } from "../../domain/entities/Task";
 
 const STORAGE_KEY = "todo_ml_v3";
 
-export class LocalStorageTaskRepository extends ITaskRepository {
+export class LocalStorageTaskRepository {
   _read() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

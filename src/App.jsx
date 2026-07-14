@@ -18,14 +18,15 @@ import "./App.css";
 
 export default function App() {
   const dispatch = useDispatch();
-  
-  const tasks = useSelector((state) => state.tasks.tasks || []);
+
+  // ✅ Dead code removed: `const tasks = useSelector(...)` was unused
+  // after handleToggleComplete moved its logic into the thunk.
   const loading = useSelector((state) => state.tasks.loading || false);
   const error = useSelector((state) => state.tasks.error);
   const filter = useSelector((state) => state.tasks.filter || 'all');
   const editId = useSelector((state) => state.tasks.editId);
   const editText = useSelector((state) => state.tasks.editText);
-  
+
   const activeCount = useSelector(selectActiveCount);
   const filteredTasks = useSelector(selectFilteredTasks);
 
@@ -46,7 +47,7 @@ export default function App() {
 
   const handleAddTask = async () => {
     if (!input.trim()) return;
-    
+
     try {
       await dispatch(addTask({ title: input })).unwrap();
       setInput("");
@@ -127,9 +128,9 @@ export default function App() {
         <div className="toast-error">
           <span className="toast-icon">⚠️</span>
           <span className="toast-message">{error}</span>
-          <button 
-            className="toast-close" 
-            onClick={() => dispatch(clearError())} 
+          <button
+            className="toast-close"
+            onClick={() => dispatch(clearError())}
             aria-label="Dismiss"
           >
             ✕
@@ -141,8 +142,8 @@ export default function App() {
         <div className="add-bar-modal">
           <div className="add-bar-header">
             <span className="add-bar-title">✏️ Add New Task</span>
-            <button 
-              className="add-bar-close" 
+            <button
+              className="add-bar-close"
               onClick={() => setShowAddBar(false)}
               aria-label="Close"
             >
@@ -174,16 +175,13 @@ export default function App() {
               </div>
             )}
             <div className="add-bar-actions">
-              <button 
-                className="btn btn-secondary" 
+              <button
+                className="btn btn-secondary"
                 onClick={() => setShowAddBar(false)}
               >
                 Cancel
               </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={handleAddTask}
-              >
+              <button className="btn btn-primary" onClick={handleAddTask}>
                 ➕ Add Task
               </button>
             </div>
@@ -224,7 +222,7 @@ export default function App() {
             <span className="empty-icon">📭</span>
             <h3>No tasks found</h3>
             <p>Add your first Gmail task</p>
-            <button 
+            <button
               className="btn btn-primary btn-sm"
               onClick={() => setShowAddBar(true)}
             >
@@ -235,8 +233,8 @@ export default function App() {
 
         <ul className="task-list">
           {filteredTasks.map((todo) => (
-            <li 
-              key={todo.id} 
+            <li
+              key={todo.id}
               className={`task-card ${todo.completed ? "completed" : ""}`}
             >
               <button
@@ -281,7 +279,11 @@ export default function App() {
                   <div className="task-content">
                     <span className="task-email-icon">📧</span>
                     <div className="task-info">
-                      <span className={`task-title ${todo.completed ? "completed" : ""}`}>
+                      <span
+                        className={`task-title ${
+                          todo.completed ? "completed" : ""
+                        }`}
+                      >
                         {todo.title}
                       </span>
                       <span className="task-meta">Gmail Task</span>
@@ -296,17 +298,17 @@ export default function App() {
               <div className="task-actions">
                 {editId === todo.id ? (
                   <>
-                    <button 
-                      className="icon-btn save" 
-                      onClick={() => handleSaveEdit(todo.id)} 
+                    <button
+                      className="icon-btn save"
+                      onClick={() => handleSaveEdit(todo.id)}
                       aria-label="Save"
                       title="Save"
                     >
                       ✓
                     </button>
-                    <button 
-                      className="icon-btn cancel" 
-                      onClick={resetEdit} 
+                    <button
+                      className="icon-btn cancel"
+                      onClick={resetEdit}
                       aria-label="Cancel"
                       title="Cancel"
                     >
@@ -315,17 +317,17 @@ export default function App() {
                   </>
                 ) : (
                   <>
-                    <button 
-                      className="icon-btn edit" 
-                      onClick={() => handleStartEdit(todo)} 
+                    <button
+                      className="icon-btn edit"
+                      onClick={() => handleStartEdit(todo)}
                       aria-label="Edit"
                       title="Edit"
                     >
                       ✎
                     </button>
-                    <button 
-                      className="icon-btn delete" 
-                      onClick={() => handleDeleteTask(todo.id)} 
+                    <button
+                      className="icon-btn delete"
+                      onClick={() => handleDeleteTask(todo.id)}
                       aria-label="Delete"
                       title="Delete"
                     >

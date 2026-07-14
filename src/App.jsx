@@ -12,6 +12,7 @@ import {
   clearEdit,
   selectFilteredTasks,
   selectActiveCount,
+  toggleTaskComplete,
 } from "./app/redux/task/task.slice";
 import "./App.css";
 
@@ -86,13 +87,7 @@ export default function App() {
 
   const handleToggleComplete = async (id) => {
     try {
-      const task = tasks.find(t => t.id === id);
-      if (task) {
-        await dispatch(updateTask({ 
-          id, 
-          completed: !task.completed 
-        })).unwrap();
-      }
+      await dispatch(toggleTaskComplete(id)).unwrap();
     } catch (error) {
       console.error('Toggle task failed:', error);
     }

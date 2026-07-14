@@ -1,9 +1,9 @@
-import { TaskRepository } from '../repositories/TaskRepository';
+import { ITaskRepository } from '../repositories/ITaskRepository';
 
 export class AddTaskUseCase {
-  private taskRepository: TaskRepository;
+  private taskRepository: ITaskRepository;
 
-  constructor(taskRepository: TaskRepository) {
+  constructor(taskRepository: ITaskRepository) {
     this.taskRepository = taskRepository;
   }
 
@@ -12,17 +12,23 @@ export class AddTaskUseCase {
     return gmailRegex.test(email);
   }
 
-  async execute(title: string) {
-    if (!title || !title.trim()) {
-      throw new Error('Email address is required');
+  async execute(gmail: string, taskDescription: string) {
+    if (!gmail || !gmail.trim()) {
+      throw new Error('Gmail address is required');
     }
 
-    if (!this.validateGmail(title.trim())) {
+    if (!this.validateGmail(gmail.trim())) {
       throw new Error('Please enter a valid Gmail address (e.g., name@gmail.com)');
     }
 
+    if (!taskDescription || !taskDescription.trim()) {
+      throw new Error('Task description is required');
+    }
+
+    const fullTitle = `${gmail.trim()} - ${taskDescription.trim()}`;
+
     const task = {
-      title: title.trim(),
+      title: fullTitle,
       completed: false
     };
 

@@ -46,12 +46,12 @@ export const fetchTasks = createAsyncThunk<Task[], void>(
   }
 );
 
-export const addTask = createAsyncThunk<Task, { title: string }>(
+export const addTask = createAsyncThunk<Task, { gmail: string; task: string }>(
   'tasks/addTask',
-  async ({ title }, { rejectWithValue }) => {
+  async ({ gmail, task }, { rejectWithValue }) => {
     try {
       const useCase = new AddTaskUseCase(taskRepository);
-      const result = await useCase.execute(title);
+      const result = await useCase.execute(gmail, task);
       return result as Task;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to add task');
@@ -148,9 +148,6 @@ const taskSlice = createSlice({
       state.editId = null;
       state.editText = '';
     },
-    // ✅ toggleTaskLocally removed — it was dead code (unused after
-    // the component switched to the `toggleTaskComplete` thunk), and
-    // it also mutated state without persisting through the repository.
   },
   extraReducers: (builder) => {
     builder

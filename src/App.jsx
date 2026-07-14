@@ -28,31 +28,66 @@ export default function App() {
   const activeCount = useSelector(selectActiveCount);
   const filteredTasks = useSelector(selectFilteredTasks);
 
-  const [input, setInput] = useState("");
+  const [gmailInput, setGmailInput] = useState("");
+  const [taskInput, setTaskInput] = useState("");
   const [showAddBar, setShowAddBar] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const inputRef = useRef(null);
+  const gmailInputRef = useRef(null);
+  const taskInputRef = useRef(null);
 
   useEffect(() => {
     dispatch(fetchTasks());
   }, [dispatch]);
 
   useEffect(() => {
-    if (showAddBar && inputRef.current) {
-      inputRef.current.focus();
+    if (showAddBar && gmailInputRef.current) {
+      gmailInputRef.current.focus();
     }
   }, [showAddBar]);
 
+  const handleGmailChange = (e) => {
+    setGmailInput(e.target.value);
+    if (error) {
+      dispatch(clearError());
+    }
+  };
+
+  const handleTaskChange = (e) => {
+    setTaskInput(e.target.value);
+    if (error) {
+      dispatch(clearError());
+    }
+  };
+
   const handleAddTask = async () => {
-    if (!input.trim()) return;
+    if (!gmailInput.trim()) {
+      dispatch({ type: 'tasks/setError', payload: 'Gmail address is required' });
+      gmailInputRef.current?.focus();
+      return;
+    }
+
+    if (!taskInput.trim()) {
+      dispatch({ type: 'tasks/setError', payload: 'Task description is required' });
+      taskInputRef.current?.focus();
+      return;
+    }
+
+    setIsSubmitting(true);
 
     try {
-      await dispatch(addTask({ title: input })).unwrap();
-      setInput("");
+      await dispatch(addTask({ 
+        gmail: gmailInput.trim(), 
+        task: taskInput.trim() 
+      })).unwrap();
+      setGmailInput("");
+      setTaskInput("");
       setShowAddBar(false);
       dispatch(clearError());
     } catch (error) {
       console.error('Add task failed:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -96,14 +131,28 @@ export default function App() {
     dispatch(setFilter(newFilter));
   };
 
-  const handleInputChange = (e) => {
-    setInput(e.target.value);
-    dispatch(clearError());
+  const handleKeyDown = (e, action) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (e.target === gmailInputRef.current && gmailInput.trim()) {
+        taskInputRef.current?.focus();
+      } else if (e.target === taskInputRef.current) {
+        action();
+      }
+    }
+    if (e.key === "Escape") {
+      setShowAddBar(false);
+      dispatch(clearError());
+      setGmailInput("");
+      setTaskInput("");
+    }
   };
 
-  const handleKeyDown = (e, action) => {
-    if (e.key === "Enter") action();
-    if (e.key === "Escape") setShowAddBar(false);
+  const handleClose = () => {
+    setShowAddBar(false);
+    dispatch(clearError());
+    setGmailInput("");
+    setTaskInput("");
   };
 
   return (
@@ -142,7 +191,7 @@ export default function App() {
             <span className="add-bar-title">✏️ Add New Task</span>
             <button
               className="add-bar-close"
-              onClick={() => setShowAddBar(false)}
+              onClick={handleClose}
               aria-label="Close"
             >
               ✕
@@ -152,20 +201,42 @@ export default function App() {
             <div className="input-group">
               <span className="input-icon">📧</span>
               <input
-                ref={inputRef}
+                ref={gmailInputRef}
                 className={`add-input ${error ? "error" : ""}`}
-                name="newTask"
-                id="newTask"
+                name="gmailInput"
+                id="gmailInput"
                 placeholder="Enter Gmail address (e.g., name@gmail.com)"
-                value={input}
-                onChange={handleInputChange}
+                value={gmailInput}
+                onChange={handleGmailChange}
                 onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
+                disabled={isSubmitting}
+                autoFocus
               />
             </div>
             <div className="input-hint">
               <span>💡</span>
               <span>Only Gmail addresses are allowed (e.g., name@gmail.com)</span>
             </div>
+            
+            <div className="input-group" style={{ marginTop: '16px' }}>
+              <span className="input-icon">📝</span>
+              <input
+                ref={taskInputRef}
+                className={`add-input ${error ? "error" : ""}`}
+                name="taskInput"
+                id="taskInput"
+                placeholder="Enter task description (e.g., Buy groceries)"
+                value={taskInput}
+                onChange={handleTaskChange}
+                onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="input-hint">
+              <span>💡</span>
+              <span>Describe what you need to do</span>
+            </div>
+
             {error && (
               <div className="input-error">
                 <span className="error-icon">❌</span>
@@ -175,12 +246,17 @@ export default function App() {
             <div className="add-bar-actions">
               <button
                 className="btn btn-secondary"
-                onClick={() => setShowAddBar(false)}
+                onClick={handleClose}
+                disabled={isSubmitting}
               >
                 Cancel
               </button>
-              <button className="btn btn-primary" onClick={handleAddTask}>
-                ➕ Add Task
+              <button 
+                className="btn btn-primary" 
+                onClick={handleAddTask}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? '⏳ Adding...' : '➕ Add Task'}
               </button>
             </div>
           </div>
@@ -256,8 +332,8 @@ export default function App() {
                         placeholder="Enter Gmail address"
                         value={editText}
                         onChange={(e) => {
-                          dispatch(setEditText(e.target.value));
-                          dispatch(clearError());
+                          setEditText(e.target.value);
+                          if (error) dispatch(clearError());
                         }}
                         onKeyDown={(e) => {
                           if (e.key === "Enter") handleSaveEdit(todo.id);

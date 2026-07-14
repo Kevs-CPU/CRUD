@@ -88,6 +88,30 @@ export const removeTask = createAsyncThunk<string, string>(
   }
 );
 
+export const toggleTaskComplete = createAsyncThunk<Task, string>(
+  'tasks/toggleTaskComplete',
+  async (id, { getState, rejectWithValue }) => {
+    try {
+      const state = getState() as { tasks: TaskState };
+      const task = state.tasks.tasks.find(t => t.id === id);
+      
+      if (!task) {
+        throw new Error('Task not found');
+      }
+
+      const useCase = new UpdateTaskUseCase(taskRepository);
+      const result = await useCase.execute({
+        id,
+        completed: !task.completed
+      });
+      
+      return result as Task;
+    } catch (error: any) {
+      return rejectWithValue(error.message || 'Failed to toggle task');
+    }
+  }
+);
+
 export const selectFilteredTasks = (state: { tasks: TaskState }) => {
   const tasks = state.tasks.tasks || [];
   const filter = state.tasks.filter || 'all';
@@ -189,6 +213,21 @@ const taskSlice = createSlice({
       })
       .addCase(removeTask.rejected, (state, action) => {
         state.error = action.payload as string || 'Failed to remove task';
+      })
+      .addCase(toggleTaskComplete.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(toggleTaskComplete.fulfilled, (state, action) => {
+        if (action.payload) {
+          const index = state.tasks.findIndex(t => t.id === action.payload.id);
+          if (index !== -1) {
+            state.tasks[index] = action.payload;
+          }
+          state.error = null;
+        }
+      })
+      .addCase(toggleTaskComplete.rejected, (state, action) => {
+        state.error = action.payload as string || 'Failed to toggle task';
       });
   },
 });

@@ -9,7 +9,7 @@ export interface TaskRepository {
 
   update(task: Task): Promise<Task>;
 
-  delete(id: string): Promise<string>;
+  remove(id: string): Promise<string>;
 
   findByGmail(gmail: string): Promise<Task | null>;
 }

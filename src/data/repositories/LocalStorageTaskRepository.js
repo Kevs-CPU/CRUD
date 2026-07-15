@@ -45,7 +45,7 @@ export class LocalStorageTaskRepository {
     return tasks[index];
   }
 
-  async delete(id) {
+  async remove(id) {
     const tasks = await this.getAll();
 
     const filtered = tasks.filter((t) => t.id !== id);
@@ -62,5 +62,9 @@ export class LocalStorageTaskRepository {
   async findByGmail(gmail) {
     const tasks = await this.getAll();
     return tasks.find((task) => task.gmail === gmail) || null;
+  }
+
+  async clear() {
+    localStorage.removeItem(STORAGE_KEY);
   }
 }

@@ -7,6 +7,7 @@ import { RemoveTaskUseCase } from '../../../domain/usecases/remove_task_usecase'
 
 export interface Task {
   id: string;
+  gmail: string;
   title: string;
   completed: boolean;
 }

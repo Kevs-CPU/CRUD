@@ -1,14 +1,24 @@
-import { TaskRepository } from '../repositories/TaskRepository';
+// src/domain/usecases/remove_task_usecase.ts
+
+import { LocalStorageTaskRepository } from "../../data/repositories/LocalStorageTaskRepository";
 
 export class RemoveTaskUseCase {
-  private taskRepository: TaskRepository;
+  constructor(private taskRepository: LocalStorageTaskRepository) {}
 
-  constructor(taskRepository: TaskRepository) {
-    this.taskRepository = taskRepository;
-  }
+  async execute(id: string): Promise<string> {
+    if (!id) {
+      throw new Error("Task ID is required");
+    }
 
-  async execute(id: string) {
-    if (!id) throw new Error('Task ID is required');
-    return await this.taskRepository.remove(id);
+    // Check if task exists
+    const task = await this.taskRepository.getById(id);
+
+    if (!task) {
+      throw new Error(`Task with ID ${id} not found`);
+    }
+
+    await this.taskRepository.delete(id);
+
+    return id;
   }
 }

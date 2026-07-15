@@ -1,9 +1,13 @@
-import { ITaskRepository } from '../repositories/ITaskRepository';
+// src/domain/usecases/add_task_usecase.ts
+
+import { Task } from '../entities/Task';
+import { TaskRepository } from '../repositories/TaskRepository';
+import { v4 as uuidv4 } from 'uuid';
 
 export class AddTaskUseCase {
-  private taskRepository: ITaskRepository;
+  private readonly taskRepository: TaskRepository;
 
-  constructor(taskRepository: ITaskRepository) {
+  constructor(taskRepository: TaskRepository) {
     this.taskRepository = taskRepository;
   }
 
@@ -12,8 +16,9 @@ export class AddTaskUseCase {
     return gmailRegex.test(email);
   }
 
-  async execute(gmail: string, taskDescription: string) {
-    if (!gmail || !gmail.trim()) {
+  async execute(gmail: string, taskDescription: string): Promise<Task> {
+    // Validate gmail
+    if (!gmail?.trim()) {
       throw new Error('Gmail address is required');
     }
 
@@ -21,17 +26,21 @@ export class AddTaskUseCase {
       throw new Error('Please enter a valid Gmail address (e.g., name@gmail.com)');
     }
 
-    if (!taskDescription || !taskDescription.trim()) {
+    // Validate task description
+    if (!taskDescription?.trim()) {
       throw new Error('Task description is required');
     }
 
-    const fullTitle = `${gmail.trim()} - ${taskDescription.trim()}`;
-
-    const task = {
-      title: fullTitle,
+    // Create new task with proper structure
+    const newTask: Task = {
+      id: uuidv4(),           // ✅ Add id
+      gmail: gmail.trim(),    // ✅ Add gmail
+      title: taskDescription.trim(),
       completed: false
     };
 
-    return await this.taskRepository.add(task);
+    // Add task to repository
+    this.taskRepository.add(newTask);
+    return newTask;
   }
 }

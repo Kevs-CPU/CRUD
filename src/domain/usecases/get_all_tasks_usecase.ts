@@ -1,4 +1,7 @@
-import { ITaskRepository as TaskRepository } from '../repositories/ITaskRepository';
+// src/domain/usecases/get_all_tasks_usecase.ts
+
+import { Task } from '../entities/Task';
+import { TaskRepository } from '../repositories/TaskRepository';
 
 export class GetAllTasksUseCase {
   private taskRepository: TaskRepository;
@@ -7,7 +10,7 @@ export class GetAllTasksUseCase {
     this.taskRepository = taskRepository;
   }
 
-  async execute() {
+  async execute(): Promise<Task[]> {
     return await this.taskRepository.getAll();
   }
 }

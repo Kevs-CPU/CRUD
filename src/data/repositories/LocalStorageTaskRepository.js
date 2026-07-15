@@ -1,4 +1,4 @@
-const STORAGE_KEY = 'tasks';
+const STORAGE_KEY = "tasks";
 
 export class LocalStorageTaskRepository {
   async getAll() {
@@ -12,34 +12,63 @@ export class LocalStorageTaskRepository {
 
   async getById(id) {
     const tasks = await this.getAll();
-    return tasks.find(task => task.id === id) || null;
+    return tasks.find((task) => task.id === id) || null;
   }
 
   async add(task) {
     const tasks = await this.getAll();
+
     const newTask = {
       ...task,
-      id: Date.now().toString()
+      id: Date.now().toString(),
     };
+
     tasks.push(newTask);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
+
     return newTask;
   }
 
   async update(task) {
     const tasks = await this.getAll();
-    const index = tasks.findIndex(t => t.id === task.id);
-    if (index === -1) throw new Error('Task not found');
-    tasks[index] = task;
+
+    const index = tasks.findIndex((t) => t.id === task.id);
+
+    if (index === -1) {
+      throw new Error("Task not found");
+    }
+
+    tasks[index] = {
+      ...tasks[index],
+      ...task,
+    };
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
-    return task;
+
+    return tasks[index];
   }
 
-  async remove(id) {
+  async delete(id) {
     const tasks = await this.getAll();
-    const filtered = tasks.filter(t => t.id !== id);
-    if (filtered.length === tasks.length) throw new Error('Task not found');
+
+    const filtered = tasks.filter((t) => t.id !== id);
+
+    if (filtered.length === tasks.length) {
+      throw new Error("Task not found");
+    }
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
+
     return id;
+  }
+
+  validateGmail(gmail) {
+    const regex = /^[^\s@]+@gmail\.com$/i;
+    return regex.test(gmail);
+  }
+
+  async findByGmail(gmail) {
+    const tasks = await this.getAll();
+    return tasks.find((task) => task.gmail === gmail) || null;
   }
 }

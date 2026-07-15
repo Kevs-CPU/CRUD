@@ -1,16 +1,11 @@
+import { Task } from "../../../domain/entities/Task";
 import {
   ADD_TASK,
   REMOVE_TASK,
   UPDATE_TASK,
   GET_ALL_TASKS,
-} from "./task.types";
-
-interface Task {
-  id: string;
-  gmail: string;
-  title: string;
-  completed: boolean;
-}
+  TaskAction,
+} from "./task.actions";
 
 interface TaskState {
   tasks: Task[];
@@ -22,7 +17,7 @@ const initialState: TaskState = {
 
 export const taskReducer = (
   state = initialState,
-  action: any
+  action: TaskAction
 ): TaskState => {
   switch (action.type) {
     case ADD_TASK:

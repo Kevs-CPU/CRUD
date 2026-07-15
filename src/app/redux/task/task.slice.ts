@@ -1,16 +1,10 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import { LocalStorageTaskRepository } from '../../../data/repositories/LocalStorageTaskRepository';
-import { GetAllTasksUseCase } from '../../../domain/usecases/get_all_tasks_usecase';
-import { AddTaskUseCase } from '../../../domain/usecases/add_task_usecase';
-import { UpdateTaskUseCase } from '../../../domain/usecases/update_task_usecase';
-import { RemoveTaskUseCase } from '../../../domain/usecases/remove_task_usecase';
-
-export interface Task {
-  id: string;
-  gmail: string;
-  title: string;
-  completed: boolean;
-}
+import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { Task } from "../../../domain/entities/Task";
+import { LocalStorageTaskRepository } from "../../../data/repositories/LocalStorageTaskRepository";
+import { GetAllTasksUseCase } from "../../../domain/usecases/get_all_tasks_usecase";
+import { AddTaskUseCase } from "../../../domain/usecases/add_task_usecase";
+import { UpdateTaskUseCase } from "../../../domain/usecases/update_task_usecase";
+import { RemoveTaskUseCase } from "../../../domain/usecases/remove_task_usecase";
 
 export type FilterType = 'all' | 'active' | 'completed';
 

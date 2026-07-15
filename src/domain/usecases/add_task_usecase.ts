@@ -39,8 +39,6 @@ export class AddTaskUseCase {
       completed: false
     };
 
-    // Add task to repository
-    this.taskRepository.add(newTask);
-    return newTask;
+    return await this.taskRepository.add(newTask);
   }
 }

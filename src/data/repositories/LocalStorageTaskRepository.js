@@ -19,7 +19,6 @@ export class LocalStorageTaskRepository {
   async add(task) {
     const tasks = await this.getAll();
 
-    // Ang UseCase na ang gumagawa ng id
     tasks.push(task);
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));

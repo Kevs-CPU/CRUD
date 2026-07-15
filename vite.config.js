@@ -14,5 +14,5 @@ export default defineConfig({
     },
   },
 
-  base: "/To-do-list/",
+  base: "/CRUD/",
 });

@@ -33,8 +33,8 @@ export class AddTaskUseCase {
 
     // Create new task with proper structure
     const newTask: Task = {
-      id: uuidv4(),           // ✅ Add id
-      gmail: gmail.trim(),    // ✅ Add gmail
+      id: uuidv4(),           //  Add id
+      gmail: gmail.trim(),    //  Add gmail
       title: taskDescription.trim(),
       completed: false
     };

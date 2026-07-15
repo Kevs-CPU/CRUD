@@ -11,7 +11,5 @@ export interface TaskRepository {
 
   delete(id: string): Promise<string>;
 
-  validateGmail(gmail: string): boolean;
-
   findByGmail(gmail: string): Promise<Task | null>;
 }

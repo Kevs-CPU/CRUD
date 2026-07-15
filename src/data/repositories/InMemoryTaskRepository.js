@@ -1,5 +1,4 @@
 let tasks = [];
-let nextId = 1;
 
 export class InMemoryTaskRepository {
   async getAll() {
@@ -11,30 +10,29 @@ export class InMemoryTaskRepository {
   }
 
   async add(task) {
-    const newTask = {
-      ...task,
-      id: String(nextId++)
-    };
-    tasks.push(newTask);
-    return newTask;
+    tasks.push(task);
+    return task;
   }
 
   async update(task) {
     const index = tasks.findIndex(t => t.id === task.id);
     if (index === -1) throw new Error('Task not found');
-    tasks[index] = task;
-    return task;
+    tasks[index] = { ...tasks[index], ...task };
+    return tasks[index];
   }
 
-  async remove(id) {
+  async delete(id) {
     const filtered = tasks.filter(t => t.id !== id);
     if (filtered.length === tasks.length) throw new Error('Task not found');
     tasks = filtered;
     return id;
   }
 
+  async findByGmail(gmail) {
+    return tasks.find(task => task.gmail === gmail) || null;
+  }
+
   clear() {
     tasks = [];
-    nextId = 1;
   }
 }

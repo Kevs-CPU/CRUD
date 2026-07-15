@@ -6,6 +6,7 @@ export class LocalStorageTaskRepository {
       const data = localStorage.getItem(STORAGE_KEY);
       return data ? JSON.parse(data) : [];
     } catch (error) {
+      console.error("Failed to read tasks:", error);
       return [];
     }
   }
@@ -18,15 +19,12 @@ export class LocalStorageTaskRepository {
   async add(task) {
     const tasks = await this.getAll();
 
-    const newTask = {
-      ...task,
-      id: Date.now().toString(),
-    };
+    // Ang UseCase na ang gumagawa ng id
+    tasks.push(task);
 
-    tasks.push(newTask);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 
-    return newTask;
+    return task;
   }
 
   async update(task) {
@@ -60,11 +58,6 @@ export class LocalStorageTaskRepository {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
 
     return id;
-  }
-
-  validateGmail(gmail) {
-    const regex = /^[^\s@]+@gmail\.com$/i;
-    return regex.test(gmail);
   }
 
   async findByGmail(gmail) {

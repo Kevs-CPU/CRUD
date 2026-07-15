@@ -1,11 +1,11 @@
-// app/taskUseCaseProvider.js
-import { InMemoryTaskRepository } from "./repositories/InMemoryTaskRepository";
-import { LocalStorageTaskRepository } from "./repositories/LocalStorageTaskRepository";
+// src/app/taskUseCaseProvider.js
+import { InMemoryTaskRepository } from "../data/repositories/InMemoryTaskRepository";
+import { LocalStorageTaskRepository } from "../data/repositories/LocalStorageTaskRepository";
 
-import { AddTaskUseCase } from "./usecases/add_task_usecase";
-import { RemoveTaskUseCase } from "./usecases/remove_task_usecase";
-import { UpdateTaskUseCase } from "./usecases/update_task_usecase";
-import { GetAllTasksUseCase } from "./usecases/get_all_tasks_usecase";
+import { AddTaskUseCase } from "../domain/usecases/add_task_usecase";
+import { RemoveTaskUseCase } from "../domain/usecases/remove_task_usecase";
+import { UpdateTaskUseCase } from "../domain/usecases/update_task_usecase";
+import { GetAllTasksUseCase } from "../domain/usecases/get_all_tasks_usecase";
 
 const REPOSITORY_TYPE = "localStorage";
 

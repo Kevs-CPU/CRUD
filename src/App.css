@@ -697,3 +697,23 @@ body {
   padding: 6px;
   border-radius: 8px;
 }
+.btn-logout {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-left: 12px;
+}
+
+.btn-logout:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-logout:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -14,10 +14,12 @@ import {
   selectActiveCount,
   toggleTaskComplete,
 } from "../redux/task/task.slice";
+import { useAuth } from "../context/AuthContext";
 import "../../App.css";
 
 export default function TaskPage() {
   const dispatch = useDispatch();
+  const { logout } = useAuth();
 
   const loading = useSelector((state) => state.tasks.loading || false);
   const error = useSelector((state) => state.tasks.error);
@@ -32,6 +34,7 @@ export default function TaskPage() {
   const [taskInput, setTaskInput] = useState("");
   const [showAddBar, setShowAddBar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const gmailInputRef = useRef(null);
   const taskInputRef = useRef(null);
@@ -45,6 +48,18 @@ export default function TaskPage() {
       gmailInputRef.current.focus();
     }
   }, [showAddBar]);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
 
   const handleGmailChange = (e) => {
     setGmailInput(e.target.value);
@@ -140,13 +155,20 @@ export default function TaskPage() {
       <header className="topbar">
         <div className="topbar-content">
           <div className="topbar-title">
-            <span className="topbar-icon">📋</span>
+            <span className="topbar-icon"></span>
             <div>
               <span className="topbar-heading">Task Manager</span>
             </div>
           </div>
           <div className="topbar-stats">
             <span className="stat-badge">{activeCount} pending</span>
+            <button 
+              className="btn btn-logout" 
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? '⏳ Logging out...' : ' Logout'}
+            </button>
           </div>
         </div>
       </header>
@@ -264,14 +286,12 @@ export default function TaskPage() {
       </div>
 
       <main className="task-scroll">
-        {loading && (
+        {loading ? (
           <div className="empty-state">
             <div className="loader"></div>
             <p>Loading your tasks...</p>
           </div>
-        )}
-
-        {!loading && filteredTasks.length === 0 && (
+        ) : filteredTasks.length === 0 ? (
           <div className="empty-state">
             <span className="empty-icon">📭</span>
             <h3>No tasks found</h3>
@@ -283,116 +303,116 @@ export default function TaskPage() {
               + Add your first task
             </button>
           </div>
-        )}
-
-        <ul className="task-list">
-          {filteredTasks.map((todo) => (
-            <li
-              key={todo.id}
-              className={`task-card ${todo.completed ? "completed" : ""}`}
-            >
-              <button
-                type="button"
-                className={`task-checkbox ${todo.completed ? "checked" : ""}`}
-                onClick={() => handleToggleComplete(todo.id)}
-                aria-label="Mark as complete"
+        ) : (
+          <ul className="task-list">
+            {filteredTasks.map((todo) => (
+              <li
+                key={todo.id}
+                className={`task-card ${todo.completed ? "completed" : ""}`}
               >
-                {todo.completed && <span className="checkmark">✓</span>}
-              </button>
+                <button
+                  type="button"
+                  className={`task-checkbox ${todo.completed ? "checked" : ""}`}
+                  onClick={() => handleToggleComplete(todo.id)}
+                  aria-label="Mark as complete"
+                >
+                  {todo.completed && <span className="checkmark">✓</span>}
+                </button>
 
-              <div className="task-body">
-                {editId === todo.id ? (
-                  <div className="edit-container">
-                    <div className="input-group inline">
-                      <span className="input-icon">📧</span>
-                      <input
-                        className={`edit-input ${error ? "error" : ""}`}
-                        name={`editTask-${todo.id}`}
-                        id={`editTask-${todo.id}`}
-                        placeholder="Enter Gmail address"
-                        value={editText}
-                        onChange={(e) => {
-                        dispatch(setEditText(e.target.value));
-                        dispatch(clearError());
-                               }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") handleSaveEdit(todo.id);
-                          if (e.key === "Escape") resetEdit();
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                    {error && (
-                      <div className="input-error small">
-                        <span className="error-icon">❌</span>
-                        <span>{error}</span>
+                <div className="task-body">
+                  {editId === todo.id ? (
+                    <div className="edit-container">
+                      <div className="input-group inline">
+                        <span className="input-icon">📧</span>
+                        <input
+                          className={`edit-input ${error ? "error" : ""}`}
+                          name={`editTask-${todo.id}`}
+                          id={`editTask-${todo.id}`}
+                          placeholder="Enter Gmail address"
+                          value={editText}
+                          onChange={(e) => {
+                            dispatch(setEditText(e.target.value));
+                            dispatch(clearError());
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") handleSaveEdit(todo.id);
+                            if (e.key === "Escape") resetEdit();
+                          }}
+                          autoFocus
+                        />
                       </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="task-content">
-                    <span className="task-email-icon">📧</span>
-                    <div className="task-info">
-                      <span
-                        className={`task-title ${
-                          todo.completed ? "completed" : ""
-                        }`}
-                      >
-                        {todo.title}
-                      </span>
-                      <span className="task-meta">Gmail Task</span>
+                      {error && (
+                        <div className="input-error small">
+                          <span className="error-icon">❌</span>
+                          <span>{error}</span>
+                        </div>
+                      )}
                     </div>
-                    {todo.completed && (
-                      <span className="task-badge">✅ Done</span>
-                    )}
-                  </div>
-                )}
-              </div>
+                  ) : (
+                    <div className="task-content">
+                      <span className="task-email-icon">📧</span>
+                      <div className="task-info">
+                        <span
+                          className={`task-title ${
+                            todo.completed ? "completed" : ""
+                          }`}
+                        >
+                          {todo.title}
+                        </span>
+                        <span className="task-meta">Gmail Task</span>
+                      </div>
+                      {todo.completed && (
+                        <span className="task-badge">✅ Done</span>
+                      )}
+                    </div>
+                  )}
+                </div>
 
-              <div className="task-actions">
-                {editId === todo.id ? (
-                  <>
-                    <button
-                      className="icon-btn save"
-                      onClick={() => handleSaveEdit(todo.id)}
-                      aria-label="Save"
-                      title="Save"
-                    >
-                      ✓
-                    </button>
-                    <button
-                      className="icon-btn cancel"
-                      onClick={resetEdit}
-                      aria-label="Cancel"
-                      title="Cancel"
-                    >
-                      ✕
-                    </button>
-                  </>
-                ) : (
-                  <>
-                    <button
-                      className="icon-btn edit"
-                      onClick={() => handleStartEdit(todo)}
-                      aria-label="Edit"
-                      title="Edit"
-                    >
-                      ✎
-                    </button>
-                    <button
-                      className="icon-btn delete"
-                      onClick={() => handleDeleteTask(todo.id)}
-                      aria-label="Delete"
-                      title="Delete"
-                    >
-                      🗑
-                    </button>
-                  </>
-                )}
-              </div>
-            </li>
-          ))}
-        </ul>
+                <div className="task-actions">
+                  {editId === todo.id ? (
+                    <>
+                      <button
+                        className="icon-btn save"
+                        onClick={() => handleSaveEdit(todo.id)}
+                        aria-label="Save"
+                        title="Save"
+                      >
+                        ✓
+                      </button>
+                      <button
+                        className="icon-btn cancel"
+                        onClick={resetEdit}
+                        aria-label="Cancel"
+                        title="Cancel"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        className="icon-btn edit"
+                        onClick={() => handleStartEdit(todo)}
+                        aria-label="Edit"
+                        title="Edit"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        className="icon-btn delete"
+                        onClick={() => handleDeleteTask(todo.id)}
+                        aria-label="Delete"
+                        title="Delete"
+                      >
+                        🗑
+                      </button>
+                    </>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </main>
 
       <button

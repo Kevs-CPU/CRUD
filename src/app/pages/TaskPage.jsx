@@ -157,7 +157,7 @@ export default function TaskPage() {
           <div className="topbar-title">
             <span className="topbar-icon"></span>
             <div>
-              <span className="topbar-heading">Task Manager</span>
+              <span className="topbar-heading">Todo list</span>
             </div>
           </div>
           <div className="topbar-stats">

@@ -21,7 +21,7 @@ export class InMemoryTaskRepository {
     return tasks[index];
   }
 
-  async delete(id) {
+  async remove(id) {
     const filtered = tasks.filter(t => t.id !== id);
     if (filtered.length === tasks.length) throw new Error('Task not found');
     tasks = filtered;

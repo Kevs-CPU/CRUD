@@ -1,12 +1,14 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { Task } from "../../../domain/entities/Task";
-import { LocalStorageTaskRepository } from "../../../data/repositories/LocalStorageTaskRepository";
-import { GetAllTasksUseCase } from "../../../domain/usecases/get_all_tasks_usecase";
-import { AddTaskUseCase } from "../../../domain/usecases/add_task_usecase";
-import { UpdateTaskUseCase } from "../../../domain/usecases/update_task_usecase";
-import { RemoveTaskUseCase } from "../../../domain/usecases/remove_task_usecase";
 
-export type FilterType = 'all' | 'active' | 'completed';
+import {
+  addTaskUseCase,
+  getAllTasksUseCase,
+  updateTaskUseCase,
+  removeTaskUseCase,
+} from "../../taskUseCaseProvider";
+
+export type FilterType = "all" | "active" | "completed";
 
 export interface TaskState {
   tasks: Task[];
@@ -21,19 +23,16 @@ const initialState: TaskState = {
   tasks: [],
   loading: false,
   error: null,
-  filter: 'all',
+  filter: "all",
   editId: null,
-  editText: '',
+  editText: "",
 };
-
-const taskRepository = new LocalStorageTaskRepository();
 
 export const fetchTasks = createAsyncThunk<Task[], void>(
   'tasks/fetchTasks',
   async (_, { rejectWithValue }) => {
     try {
-      const useCase = new GetAllTasksUseCase(taskRepository);
-      const result = await useCase.execute();
+      const result = await getAllTasksUseCase.execute();
       return result as Task[];
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to fetch tasks');
@@ -45,8 +44,7 @@ export const addTask = createAsyncThunk<Task, { gmail: string; task: string }>(
   'tasks/addTask',
   async ({ gmail, task }, { rejectWithValue }) => {
     try {
-      const useCase = new AddTaskUseCase(taskRepository);
-      const result = await useCase.execute(gmail, task);
+      const result = await addTaskUseCase.execute(gmail, task);
       return result as Task;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to add task');
@@ -61,8 +59,7 @@ export const updateTask = createAsyncThunk<
   'tasks/updateTask',
   async ({ id, title, completed }, { rejectWithValue }) => {
     try {
-      const useCase = new UpdateTaskUseCase(taskRepository);
-      const result = await useCase.execute({ id, title, completed });
+      const result = await updateTaskUseCase.execute({id,title,completed,});
       return result as Task;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to update task');
@@ -74,8 +71,7 @@ export const removeTask = createAsyncThunk<string, string>(
   'tasks/removeTask',
   async (id, { rejectWithValue }) => {
     try {
-      const useCase = new RemoveTaskUseCase(taskRepository);
-      const result = await useCase.execute(id);
+      const result = await removeTaskUseCase.execute(id);
       return result as string;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to remove task');
@@ -94,11 +90,10 @@ export const toggleTaskComplete = createAsyncThunk<Task, string>(
         throw new Error('Task not found');
       }
 
-      const useCase = new UpdateTaskUseCase(taskRepository);
-      const result = await useCase.execute({
-        id,
-        completed: !task.completed
-      });
+      const result = await updateTaskUseCase.execute({
+  id,
+  completed: !task.completed,
+});
 
       return result as Task;
     } catch (error: any) {

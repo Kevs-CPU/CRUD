@@ -62,6 +62,7 @@ export class FirebaseTaskRepository {
       const taskRef = doc(db, COLLECTION_NAME, task.id);
 
       await updateDoc(taskRef, {
+        id: task.id, 
         gmail: task.gmail,
         title: task.title,
         completed: task.completed,

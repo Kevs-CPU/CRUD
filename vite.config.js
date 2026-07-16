@@ -20,10 +20,19 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-redux', '@reduxjs/toolkit'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
-          antd: ['antd'],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-redux') || id.includes('@reduxjs/toolkit')) {
+              return 'vendor';
+            }
+            if (id.includes('firebase')) {
+              return 'firebase';
+            }
+            if (id.includes('antd')) {
+              return 'antd';
+            }
+            return 'vendor';
+          }
         },
       },
     },

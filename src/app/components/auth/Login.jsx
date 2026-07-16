@@ -59,7 +59,7 @@ export const Login = () => {
       <div className="login-card">
         <div className="login-header">
           <span className="login-icon">📋</span>
-          <h2>Task Manager</h2>
+          <h2>Todo list</h2>
           <p>
             {isResetting 
               ? 'Reset your password' 

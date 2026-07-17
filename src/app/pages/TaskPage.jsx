@@ -15,7 +15,8 @@ import {
   toggleTaskComplete,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
-import "../../App.css";
+import { ClipboardCheck } from 'lucide-react';
+import "./TaskPage.css";
 
 export default function TaskPage() {
   const dispatch = useDispatch();
@@ -155,7 +156,9 @@ export default function TaskPage() {
       <header className="topbar">
         <div className="topbar-content">
           <div className="topbar-title">
-            <span className="topbar-icon"></span>
+            <span className="topbar-icon">
+              <ClipboardCheck size={22} strokeWidth={2} color="#ffffff" />
+            </span>
             <div>
               <span className="topbar-heading">Todo list</span>
             </div>
@@ -167,7 +170,7 @@ export default function TaskPage() {
               onClick={handleLogout}
               disabled={isLoggingOut}
             >
-              {isLoggingOut ? '⏳ Logging out...' : ' Logout'}
+              {isLoggingOut ? 'Logging out...' : ' Logout'}
             </button>
           </div>
         </div>
@@ -175,7 +178,6 @@ export default function TaskPage() {
 
       {error && (
         <div className="toast-error">
-          <span className="toast-icon">⚠️</span>
           <span className="toast-message">{error}</span>
           <button
             className="toast-close"
@@ -190,7 +192,7 @@ export default function TaskPage() {
       <div className={`add-bar-overlay ${showAddBar ? "active" : ""}`}>
         <div className="add-bar-modal">
           <div className="add-bar-header">
-            <span className="add-bar-title">✏️ Add New Task</span>
+            <span className="add-bar-title">Add New Task</span>
             <button
               className="add-bar-close"
               onClick={handleClose}
@@ -201,13 +203,13 @@ export default function TaskPage() {
           </div>
           <div className="add-bar-body">
             <div className="input-group">
-              <span className="input-icon">📧</span>
+              <span className="input-icon"></span>
               <input
                 ref={gmailInputRef}
                 className={`add-input ${error ? "error" : ""}`}
                 name="gmailInput"
                 id="gmailInput"
-                placeholder="Enter Gmail address (e.g., name@gmail.com)"
+                placeholder="Enter Gmail address"
                 value={gmailInput}
                 onChange={handleGmailChange}
                 onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
@@ -216,18 +218,18 @@ export default function TaskPage() {
               />
             </div>
             <div className="input-hint">
-              <span>💡</span>
-              <span>Only Gmail addresses are allowed (e.g., name@gmail.com)</span>
+              <span></span>
+              <span>Only Gmail addresses are allowed</span>
             </div>
             
             <div className="input-group" style={{ marginTop: '16px' }}>
-              <span className="input-icon">📝</span>
+              <span className="input-icon"></span>
               <input
                 ref={taskInputRef}
                 className={`add-input ${error ? "error" : ""}`}
                 name="taskInput"
                 id="taskInput"
-                placeholder="Enter task description (e.g., Buy groceries)"
+                placeholder="Enter task description"
                 value={taskInput}
                 onChange={handleTaskChange}
                 onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
@@ -235,13 +237,13 @@ export default function TaskPage() {
               />
             </div>
             <div className="input-hint">
-              <span>💡</span>
+              <span></span>
               <span>Describe what you need to do</span>
             </div>
 
             {error && (
               <div className="input-error">
-                <span className="error-icon">❌</span>
+                <span className="error-icon"></span>
                 <span>{error}</span>
               </div>
             )}
@@ -258,7 +260,7 @@ export default function TaskPage() {
                 onClick={handleAddTask}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? '⏳ Adding...' : '➕ Add Task'}
+                {isSubmitting ? 'Adding...' : 'Add Task'}
               </button>
             </div>
           </div>
@@ -273,9 +275,9 @@ export default function TaskPage() {
               className={`filter-chip ${filter === f ? "active" : ""}`}
               onClick={() => handleFilterChange(f)}
             >
-              {f === "all" && "📋 All"}
-              {f === "active" && "⏳ Active"}
-              {f === "completed" && "✅ Completed"}
+              {f === "all" && " All"}
+              {f === "active" && " Active"}
+              {f === "completed" && "Completed"}
             </button>
           ))}
         </div>
@@ -323,7 +325,6 @@ export default function TaskPage() {
                   {editId === todo.id ? (
                     <div className="edit-container">
                       <div className="input-group inline">
-                        <span className="input-icon">📧</span>
                         <input
                           className={`edit-input ${error ? "error" : ""}`}
                           name={`editTask-${todo.id}`}
@@ -343,14 +344,12 @@ export default function TaskPage() {
                       </div>
                       {error && (
                         <div className="input-error small">
-                          <span className="error-icon">❌</span>
                           <span>{error}</span>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="task-content">
-                      <span className="task-email-icon">📧</span>
                       <div className="task-info">
                         <span
                           className={`task-title ${
@@ -424,4 +423,4 @@ export default function TaskPage() {
       </button>
     </div>
   );
-}
+} 

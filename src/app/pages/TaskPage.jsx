@@ -15,12 +15,12 @@ import {
   toggleTaskComplete,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, Menu, LogOut } from 'lucide-react';
 import "./TaskPage.css";
 
 export default function TaskPage() {
   const dispatch = useDispatch();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const loading = useSelector((state) => state.tasks.loading || false);
   const error = useSelector((state) => state.tasks.error);
@@ -30,15 +30,21 @@ export default function TaskPage() {
 
   const activeCount = useSelector(selectActiveCount);
   const filteredTasks = useSelector(selectFilteredTasks);
+  const allTasks = useSelector((state) => state.tasks.tasks);
 
   const [gmailInput, setGmailInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
   const [showAddBar, setShowAddBar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const gmailInputRef = useRef(null);
   const taskInputRef = useRef(null);
+
+  const allCount = allTasks.length;
+  const activeTaskCount = allTasks.filter((task) => !task.completed).length;
+  const completedTaskCount = allTasks.filter((task) => task.completed).length;
 
   useEffect(() => {
     dispatch(fetchTasks());
@@ -74,14 +80,22 @@ export default function TaskPage() {
 
   const handleAddTask = async () => {
     setIsSubmitting(true);
+
     try {
-      await dispatch(addTask({ gmail: gmailInput, task: taskInput })).unwrap();
+      await dispatch(
+        addTask({
+          gmail: gmailInput,
+          currentUserEmail: user?.email || "",
+          task: taskInput,
+        })
+      ).unwrap();
+
       setGmailInput("");
       setTaskInput("");
       setShowAddBar(false);
       dispatch(clearError());
     } catch (error) {
-      console.error('Add task failed:', error);
+      console.error("Add task failed:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -151,6 +165,12 @@ export default function TaskPage() {
     setTaskInput("");
   };
 
+  const filterOptions = [
+    { key: "all", label: "All", count: allCount },
+    { key: "active", label: "Active", count: activeTaskCount },
+    { key: "completed", label: "Completed", count: completedTaskCount },
+  ];
+
   return (
     <div className="app-shell">
       <header className="topbar">
@@ -163,15 +183,33 @@ export default function TaskPage() {
               <span className="topbar-heading">Todo list</span>
             </div>
           </div>
-          <div className="topbar-stats">
-            <span className="stat-badge">{activeCount} pending</span>
-            <button 
-              className="btn btn-logout" 
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? 'Logging out...' : ' Logout'}
-            </button>
+          <div className="topbar-actions">
+            <span className="stat-badge">
+              {activeCount} pending
+            </span>
+
+            <div className="menu-container">
+              <button
+                className="menu-btn"
+                onClick={() => setShowMenu(!showMenu)}
+                aria-label="Menu"
+              >
+                <Menu size={20} />
+              </button>
+
+              {showMenu && (
+                <div className="menu-dropdown">
+                  <button
+                    className="menu-item"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                  >
+                    <LogOut size={16} />
+                    {isLoggingOut ? "Logging out..." : "Logout"}
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -221,7 +259,7 @@ export default function TaskPage() {
               <span></span>
               <span>Only Gmail addresses are allowed</span>
             </div>
-            
+
             <div className="input-group" style={{ marginTop: '16px' }}>
               <span className="input-icon"></span>
               <input
@@ -255,8 +293,8 @@ export default function TaskPage() {
               >
                 Cancel
               </button>
-              <button 
-                className="btn btn-primary" 
+              <button
+                className="btn btn-primary"
                 onClick={handleAddTask}
                 disabled={isSubmitting}
               >
@@ -269,22 +307,19 @@ export default function TaskPage() {
 
       <div className="filter-row">
         <div className="filter-group">
-          {["all", "active", "completed"].map((f) => (
+          {filterOptions.map((item) => (
             <button
-              key={f}
-              className={`filter-chip ${filter === f ? "active" : ""}`}
-              onClick={() => handleFilterChange(f)}
+              key={item.key}
+              className={`filter-chip ${filter === item.key ? "active" : ""}`}
+              onClick={() => handleFilterChange(item.key)}
             >
-              {f === "all" && " All"}
-              {f === "active" && " Active"}
-              {f === "completed" && "Completed"}
+              {item.label}
+              <span className="filter-badge">
+                {item.count}
+              </span>
             </button>
           ))}
         </div>
-        <span className="filter-count">
-          <span className="count-number">{activeCount}</span>
-          <span className="count-label">tasks remaining</span>
-        </span>
       </div>
 
       <main className="task-scroll">
@@ -358,7 +393,6 @@ export default function TaskPage() {
                         >
                           {todo.title}
                         </span>
-                        <span className="task-meta">Gmail Task</span>
                       </div>
                       {todo.completed && (
                         <span className="task-badge">✅ Done</span>
@@ -423,4 +457,4 @@ export default function TaskPage() {
       </button>
     </div>
   );
-} 
+}

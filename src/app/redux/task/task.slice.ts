@@ -40,11 +40,18 @@ export const fetchTasks = createAsyncThunk<Task[], void>(
   }
 );
 
-export const addTask = createAsyncThunk<Task, { gmail: string; task: string }>(
+export const addTask = createAsyncThunk<Task, {
+    gmail: string;
+    currentUserEmail: string;
+    task: string;}> (
   'tasks/addTask',
-  async ({ gmail, task }, { rejectWithValue }) => {
+  async ({ gmail, currentUserEmail, task }, { rejectWithValue }) => {
     try {
-      const result = await addTaskUseCase.execute(gmail, task);
+const result = await addTaskUseCase.execute(
+    gmail,
+    currentUserEmail,
+    task
+);
       return result as Task;
     } catch (error: any) {
       return rejectWithValue(error.message || 'Failed to add task');

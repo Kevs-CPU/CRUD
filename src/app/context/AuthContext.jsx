@@ -37,7 +37,7 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       throw new Error(error.message);
     }
-  };
+  };  
 
   const register = async (email, password) => {
     try {

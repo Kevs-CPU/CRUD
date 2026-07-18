@@ -1,13 +1,13 @@
-import { FirebaseTaskRepository } from "../data/repositories/FirebaseTaskRepository"; // new import 
+// src/app/taskUseCaseProvider.js
+import { FirebaseTaskRepository } from "../data/repositories/FirebaseTaskRepository";
 import { InMemoryTaskRepository } from "../data/repositories/InMemoryTaskRepository";
 import { LocalStorageTaskRepository } from "../data/repositories/LocalStorageTaskRepository";
-
 import { AddTaskUseCase } from "../domain/usecases/add_task_usecase";
 import { RemoveTaskUseCase } from "../domain/usecases/remove_task_usecase";
 import { UpdateTaskUseCase } from "../domain/usecases/update_task_usecase";
 import { GetAllTasksUseCase } from "../domain/usecases/get_all_tasks_usecase";
 
-const REPOSITORY_TYPE = "firebase"; // localstorage change into firebase 
+const REPOSITORY_TYPE = "firebase";
 
 let repositoryInstance = null;
 
@@ -18,14 +18,12 @@ function getTaskRepository() {
 
   try {
     switch (REPOSITORY_TYPE) {
-      case "firebase": ///////// firebase
+      case "firebase":
         repositoryInstance = new FirebaseTaskRepository();
         break;
-
-      case "localStorage": 
+      case "localStorage":
         repositoryInstance = new LocalStorageTaskRepository();
         break;
-
       case "memory":
       default:
         repositoryInstance = new InMemoryTaskRepository();

@@ -1,58 +1,70 @@
-import { Task } from '../entities/Task';
-import { TaskRepository } from '../repositories/TaskRepository';
-import { v4 as uuidv4 } from 'uuid';
+import { Task } from "../entities/Task";
+import { TaskRepository } from "../repositories/TaskRepository";
+import { v4 as uuidv4 } from "uuid";
 
 export class AddTaskUseCase {
-  private readonly taskRepository: TaskRepository;
-
-  constructor(taskRepository: TaskRepository) {
-    this.taskRepository = taskRepository;
-  }
+  constructor(private readonly taskRepository: TaskRepository) {}
 
   private validateGmail(email: string): boolean {
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
     return gmailRegex.test(email);
   }
 
-  async execute(
-    gmail: string,
-    currentUserEmail: string,
-    taskDescription: string
-  ): Promise<Task> {
+  async execute({
+    userId,
+    username,
+    gmail,
+    title,
+    currentUserEmail,
+  }: {
+    userId: string;
+    username: string;
+    gmail: string;
+    title: string;
+    currentUserEmail: string;
+  }): Promise<Task> {
 
-    // Validate Gmail input
-    if (!gmail?.trim()) {
-      throw new Error('Gmail address is required');
+    // Validate authenticated user
+    if (!userId.trim()) {
+      throw new Error("User ID is required.");
     }
 
-    // Validate Gmail format
+    if (!username.trim()) {
+      throw new Error("Username is required.");
+    }
+
+    // Validate Gmail
+    if (!gmail.trim()) {
+      throw new Error("Gmail address is required.");
+    }
+
     if (!this.validateGmail(gmail.trim())) {
-      throw new Error('Please enter a valid Gmail address (e.g., name@gmail.com)');
+      throw new Error(
+        "Please enter a valid Gmail address (example@gmail.com)."
+      );
     }
 
-    // Validate logged-in user
-    if (!currentUserEmail?.trim()) {
-      throw new Error('No authenticated user found');
-    }
-
-    // Check if Gmail matches logged-in user
+    // Verify Gmail matches logged-in account
     if (gmail.trim().toLowerCase() !== currentUserEmail.trim().toLowerCase()) {
-      throw new Error('The Gmail does not match the currently logged-in account.');
+      throw new Error(
+        "The entered Gmail does not match the logged-in account."
+      );
     }
 
-    // Validate task description
-    if (!taskDescription?.trim()) {
-      throw new Error('Task description is required');
+    // Validate task title
+    if (!title.trim()) {
+      throw new Error("Task description is required.");
     }
 
-    // Create new task
-    const newTask: Task = {
+    const task: Task = {
       id: uuidv4(),
-      gmail: gmail.trim(),
-      title: taskDescription.trim(),
+      userId,
+      username,
+      gmail: gmail.trim().toLowerCase(),
+      title: title.trim(),
       completed: false,
     };
 
-    return await this.taskRepository.add(newTask);
+    return await this.taskRepository.add(task);
   }
 }

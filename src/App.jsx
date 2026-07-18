@@ -1,3 +1,4 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './app/context/AuthContext';
 import TaskPage from './app/pages/TaskPage';
 import { Login } from './app/components/auth/Login';
@@ -23,11 +24,28 @@ function App() {
     );
   }
 
-  if (!user) {
-    return <Login />;
-  }
-
-  return <TaskPage />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route 
+          path="/" 
+          element={user ? <Navigate to="/tasks" /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/login" 
+          element={user ? <Navigate to="/tasks" /> : <Login />} 
+        />
+        <Route 
+          path="/tasks" 
+          element={user ? <TaskPage /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="*" 
+          element={<Navigate to="/login" replace />} 
+        />
+      </Routes>
+    </BrowserRouter>
+  );
 }
 
 export default App;

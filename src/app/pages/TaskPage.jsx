@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import {
   clearError,
+  setError,
   setFilter,
   addTask,
   fetchTasks,
@@ -10,45 +11,57 @@ import {
   setEditId,
   setEditText,
   clearEdit,
-  selectFilteredTasks,
   selectActiveCount,
+  selectFilteredTasks,
   toggleTaskComplete,
+  clearTasks,
+  selectLoading,
+  selectError,
+  selectFilter,
+  selectEditId,
+  selectEditText,
+  selectTotalCount,
+  selectCompletedCount,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
-import { ClipboardCheck, Menu, LogOut } from 'lucide-react';
+import { ClipboardCheck, Menu, LogOut, User, Mail, Check, X } from 'lucide-react';
 import "./TaskPage.css";
 
 export default function TaskPage() {
   const dispatch = useDispatch();
-  const { logout, user } = useAuth();
+  const { logout, user, getUsername } = useAuth();
 
-  const loading = useSelector((state) => state.tasks.loading || false);
-  const error = useSelector((state) => state.tasks.error);
-  const filter = useSelector((state) => state.tasks.filter || 'all');
-  const editId = useSelector((state) => state.tasks.editId);
-  const editText = useSelector((state) => state.tasks.editText);
-
+  const loading = useSelector(selectLoading);
+  const error = useSelector(selectError);
+  const filter = useSelector(selectFilter);
+  const editId = useSelector(selectEditId);
+  const editText = useSelector(selectEditText);
   const activeCount = useSelector(selectActiveCount);
   const filteredTasks = useSelector(selectFilteredTasks);
-  const allTasks = useSelector((state) => state.tasks.tasks);
+  const completedCount = useSelector(selectCompletedCount);
 
-  const [gmailInput, setGmailInput] = useState("");
   const [taskInput, setTaskInput] = useState("");
+  const [gmailInput, setGmailInput] = useState("");
   const [showAddBar, setShowAddBar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState(null);
 
   const gmailInputRef = useRef(null);
-  const taskInputRef = useRef(null);
 
-  const allCount = allTasks.length;
-  const activeTaskCount = allTasks.filter((task) => !task.completed).length;
-  const completedTaskCount = allTasks.filter((task) => task.completed).length;
+  const filterOptions = useMemo(() => [
+    { key: "all", label: "All", count: activeCount },
+    { key: "active", label: "Active", count: activeCount },
+    { key: "completed", label: "Completed", count: completedCount },
+  ], [activeCount, completedCount]);
 
   useEffect(() => {
-    dispatch(fetchTasks());
-  }, [dispatch]);
+    if (user?.uid) {
+      dispatch(fetchTasks());
+    }
+  }, [dispatch, user?.uid]);
 
   useEffect(() => {
     if (showAddBar && gmailInputRef.current) {
@@ -61,16 +74,13 @@ export default function TaskPage() {
     setIsLoggingOut(true);
     try {
       await logout();
+      dispatch(clearTasks());
     } catch (error) {
       console.error('Logout failed:', error);
+      dispatch(setError('Failed to logout. Please try again.'));
     } finally {
       setIsLoggingOut(false);
     }
-  };
-
-  const handleGmailChange = (e) => {
-    setGmailInput(e.target.value);
-    dispatch(clearError());
   };
 
   const handleTaskChange = (e) => {
@@ -78,20 +88,21 @@ export default function TaskPage() {
     dispatch(clearError());
   };
 
+  const handleGmailChange = (e) => {
+    setGmailInput(e.target.value);
+    dispatch(clearError());
+  };
+
   const handleAddTask = async () => {
     setIsSubmitting(true);
-
     try {
-      await dispatch(
-        addTask({
-          gmail: gmailInput,
-          currentUserEmail: user?.email || "",
-          task: taskInput,
-        })
-      ).unwrap();
+      await dispatch(addTask({
+        gmail: gmailInput,
+        task: taskInput,
+      })).unwrap();
 
-      setGmailInput("");
       setTaskInput("");
+      setGmailInput("");
       setShowAddBar(false);
       dispatch(clearError());
     } catch (error) {
@@ -101,13 +112,27 @@ export default function TaskPage() {
     }
   };
 
-  const handleDeleteTask = async (id) => {
+  const handleDeleteClick = (id) => {
     if (editId === id) resetEdit();
+    setDeleteTargetId(id);
+    setShowConfirmModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTargetId) return;
+
     try {
-      await dispatch(removeTask(id)).unwrap();
+      await dispatch(removeTask(deleteTargetId)).unwrap();
+      setShowConfirmModal(false);
+      setDeleteTargetId(null);
     } catch (error) {
       console.error('Delete task failed:', error);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowConfirmModal(false);
+    setDeleteTargetId(null);
   };
 
   const handleStartEdit = (todo) => {
@@ -122,7 +147,10 @@ export default function TaskPage() {
 
   const handleSaveEdit = async (id) => {
     try {
-      await dispatch(updateTask({ id, title: editText })).unwrap();
+      await dispatch(updateTask({
+        id,
+        title: editText
+      })).unwrap();
       resetEdit();
     } catch (error) {
       console.error('Update task failed:', error);
@@ -141,35 +169,22 @@ export default function TaskPage() {
     dispatch(setFilter(newFilter));
   };
 
-  const handleKeyDown = (e, action) => {
+  const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      if (e.target === gmailInputRef.current) {
-        taskInputRef.current?.focus();
-      } else if (e.target === taskInputRef.current) {
-        action();
-      }
+      handleAddTask();
     }
     if (e.key === "Escape") {
-      setShowAddBar(false);
-      dispatch(clearError());
-      setGmailInput("");
-      setTaskInput("");
+      handleClose();
     }
   };
 
   const handleClose = () => {
     setShowAddBar(false);
-    dispatch(clearError());
-    setGmailInput("");
     setTaskInput("");
+    setGmailInput("");
+    dispatch(clearError());
   };
-
-  const filterOptions = [
-    { key: "all", label: "All", count: allCount },
-    { key: "active", label: "Active", count: activeTaskCount },
-    { key: "completed", label: "Completed", count: completedTaskCount },
-  ];
 
   return (
     <div className="app-shell">
@@ -179,15 +194,16 @@ export default function TaskPage() {
             <span className="topbar-icon">
               <ClipboardCheck size={22} strokeWidth={2} color="#ffffff" />
             </span>
-            <div>
-              <span className="topbar-heading">Todo list</span>
+            <div className="user-greeting">
+              <span className="topbar-heading">
+                Welcome {getUsername()}
+              </span>
             </div>
           </div>
           <div className="topbar-actions">
-            <span className="stat-badge">
-              {activeCount} pending
-            </span>
-
+            {activeCount > 0 && (
+              <span className="stat-badge">{activeCount} pending</span>
+            )}
             <div className="menu-container">
               <button
                 className="menu-btn"
@@ -196,7 +212,6 @@ export default function TaskPage() {
               >
                 <Menu size={20} />
               </button>
-
               {showMenu && (
                 <div className="menu-dropdown">
                   <button
@@ -222,7 +237,7 @@ export default function TaskPage() {
             onClick={() => dispatch(clearError())}
             aria-label="Dismiss"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
       )}
@@ -230,62 +245,67 @@ export default function TaskPage() {
       <div className={`add-bar-overlay ${showAddBar ? "active" : ""}`}>
         <div className="add-bar-modal">
           <div className="add-bar-header">
+            <div className="add-bar-icon-wrapper">
+              <span className="add-bar-icon">📝</span>
+            </div>
             <span className="add-bar-title">Add New Task</span>
             <button
               className="add-bar-close"
               onClick={handleClose}
               aria-label="Close"
             >
-              ✕
+              <X size={18} />
             </button>
           </div>
+
           <div className="add-bar-body">
-            <div className="input-group">
-              <span className="input-icon"></span>
-              <input
-                ref={gmailInputRef}
-                className={`add-input ${error ? "error" : ""}`}
-                name="gmailInput"
-                id="gmailInput"
-                placeholder="Enter Gmail address"
-                value={gmailInput}
-                onChange={handleGmailChange}
-                onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
-                disabled={isSubmitting}
-                autoFocus
-              />
-            </div>
-            <div className="input-hint">
-              <span></span>
-              <span>Only Gmail addresses are allowed</span>
-            </div>
-
-            <div className="input-group" style={{ marginTop: '16px' }}>
-              <span className="input-icon"></span>
-              <input
-                ref={taskInputRef}
-                className={`add-input ${error ? "error" : ""}`}
-                name="taskInput"
-                id="taskInput"
-                placeholder="Enter task description"
-                value={taskInput}
-                onChange={handleTaskChange}
-                onKeyDown={(e) => handleKeyDown(e, handleAddTask)}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="input-hint">
-              <span></span>
-              <span>Describe what you need to do</span>
-            </div>
-
-            {error && (
-              <div className="input-error">
-                <span className="error-icon"></span>
-                <span>{error}</span>
+            <div className="form-group">
+              <label className="form-label" htmlFor="gmailInput">
+                Gmail Address <span className="required">*</span>
+              </label>
+              <div className="input-wrapper">
+                <Mail size={16} className="input-icon" />
+                <input
+                  ref={gmailInputRef}
+                  className={`form-input ${error ? "error" : ""}`}
+                  id="gmailInput"
+                  placeholder="Enter your registered Gmail"
+                  value={gmailInput}
+                  onChange={handleGmailChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSubmitting}
+                />
               </div>
-            )}
-            <div className="add-bar-actions">
+            </div>
+
+            <div className="form-group">
+              <label className="form-label" htmlFor="taskInput">
+                Task Description <span className="required">*</span>
+              </label>
+              <div className="input-wrapper">
+                <input
+                  className={`form-input ${error ? "error" : ""}`}
+                  id="taskInput"
+                  placeholder="What needs to be done?"
+                  value={taskInput}
+                  onChange={handleTaskChange}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSubmitting}
+                />
+              </div>
+              {error ? (
+                <div className="input-error">
+                  <span className="error-icon">⚠</span>
+                  <span>{error}</span>
+                </div>
+              ) : (
+                <div className="input-hint">
+                  Be specific and clear with your task description
+                </div>
+              )}
+            </div>
+
+            <div className="form-actions">
               <button
                 className="btn btn-secondary"
                 onClick={handleClose}
@@ -298,12 +318,60 @@ export default function TaskPage() {
                 onClick={handleAddTask}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? 'Adding...' : 'Add Task'}
+                {isSubmitting ? (
+                  <>
+                    <span className="spinner"></span>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <Check size={16} />
+                    Add Task
+                  </>
+                )}
               </button>
             </div>
           </div>
         </div>
       </div>
+
+      {showConfirmModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <div className="modal-header-left">
+                <span className="modal-icon">🗑</span>
+                <h3>Delete Task</h3>
+              </div>
+              <button
+                className="modal-close"
+                onClick={handleCancelDelete}
+                aria-label="Close"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="modal-body">
+              <p className="modal-message">Are you sure you want to delete this task?</p>
+              <p className="modal-subtext">This action cannot be undone.</p>
+            </div>
+            <div className="modal-actions">
+              <button
+                className="btn-modal btn-modal-secondary"
+                onClick={handleCancelDelete}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-modal btn-modal-danger"
+                onClick={handleConfirmDelete}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="filter-row">
         <div className="filter-group">
@@ -314,9 +382,9 @@ export default function TaskPage() {
               onClick={() => handleFilterChange(item.key)}
             >
               {item.label}
-              <span className="filter-badge">
-                {item.count}
-              </span>
+              {item.count > 0 && (
+                <span className="filter-badge">{item.count}</span>
+              )}
             </button>
           ))}
         </div>
@@ -332,7 +400,13 @@ export default function TaskPage() {
           <div className="empty-state">
             <span className="empty-icon">📭</span>
             <h3>No tasks found</h3>
-            <p>Add your first Gmail task</p>
+            <p>
+              {filter === 'all'
+                ? "Add your first task"
+                : filter === 'active'
+                  ? "No active tasks"
+                  : "No completed tasks"}
+            </p>
             <button
               className="btn btn-primary btn-sm"
               onClick={() => setShowAddBar(true)}
@@ -347,14 +421,14 @@ export default function TaskPage() {
                 key={todo.id}
                 className={`task-card ${todo.completed ? "completed" : ""}`}
               >
-                <button
-                  type="button"
-                  className={`task-checkbox ${todo.completed ? "checked" : ""}`}
-                  onClick={() => handleToggleComplete(todo.id)}
-                  aria-label="Mark as complete"
-                >
-                  {todo.completed && <span className="checkmark">✓</span>}
-                </button>
+                {!todo.completed && (
+                  <button
+                    type="button"
+                    className="task-checkbox"
+                    onClick={() => handleToggleComplete(todo.id)}
+                    aria-label="Mark as complete"
+                  />
+                )}
 
                 <div className="task-body">
                   {editId === todo.id ? (
@@ -362,9 +436,7 @@ export default function TaskPage() {
                       <div className="input-group inline">
                         <input
                           className={`edit-input ${error ? "error" : ""}`}
-                          name={`editTask-${todo.id}`}
-                          id={`editTask-${todo.id}`}
-                          placeholder="Enter Gmail address"
+                          placeholder="Edit task..."
                           value={editText}
                           onChange={(e) => {
                             dispatch(setEditText(e.target.value));
@@ -386,29 +458,31 @@ export default function TaskPage() {
                   ) : (
                     <div className="task-content">
                       <div className="task-info">
-                        <span
-                          className={`task-title ${
-                            todo.completed ? "completed" : ""
-                          }`}
-                        >
+                        <span className={`task-title ${todo.completed ? "completed" : ""}`}>
                           {todo.title}
                         </span>
                       </div>
-                      {todo.completed && (
-                        <span className="task-badge">✅ Done</span>
-                      )}
                     </div>
                   )}
                 </div>
 
                 <div className="task-actions">
-                  {editId === todo.id ? (
+                  {todo.completed ? (
+                    <div className="completed-actions">
+                      <button
+                        className="btn-remove"
+                        onClick={() => handleDeleteClick(todo.id)}
+                        aria-label="Remove"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : editId === todo.id ? (
                     <>
                       <button
                         className="icon-btn save"
                         onClick={() => handleSaveEdit(todo.id)}
                         aria-label="Save"
-                        title="Save"
                       >
                         ✓
                       </button>
@@ -416,9 +490,8 @@ export default function TaskPage() {
                         className="icon-btn cancel"
                         onClick={resetEdit}
                         aria-label="Cancel"
-                        title="Cancel"
                       >
-                        ✕
+                        <X size={16} />
                       </button>
                     </>
                   ) : (
@@ -427,15 +500,13 @@ export default function TaskPage() {
                         className="icon-btn edit"
                         onClick={() => handleStartEdit(todo)}
                         aria-label="Edit"
-                        title="Edit"
                       >
                         ✎
                       </button>
                       <button
                         className="icon-btn delete"
-                        onClick={() => handleDeleteTask(todo.id)}
+                        onClick={() => handleDeleteClick(todo.id)}
                         aria-label="Delete"
-                        title="Delete"
                       >
                         🗑
                       </button>

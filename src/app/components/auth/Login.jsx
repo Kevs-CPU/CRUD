@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Eye, EyeOff, AlertTriangle, CheckCircle2, ClipboardCheck } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, AlertTriangle, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './Login.css';
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
+  const [gmail, setGmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -15,6 +16,12 @@ export const Login = () => {
 
   const { login, register, resetPassword } = useAuth();
 
+  const resetFields = () => {
+    setUsername('');
+    setGmail('');
+    setPassword('');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLocalError('');
@@ -23,17 +30,19 @@ export const Login = () => {
 
     try {
       if (isResetting) {
-        await resetPassword(email);
+        await resetPassword(gmail);
         setSuccessMessage('Password reset email sent! Check your inbox.');
-        setEmail('');
+        resetFields();
         setIsResetting(false);
         return;
       }
 
       if (isRegistering) {
-        await register(email, password);
+        // Register needs username + gmail + password
+        await register(username, gmail, password);
       } else {
-        await login(email, password);
+        // Login only needs username + password
+        await login(username, password);
       }
     } catch (error) {
       setLocalError(error.message);
@@ -47,6 +56,7 @@ export const Login = () => {
     setIsResetting(false);
     setLocalError('');
     setSuccessMessage('');
+    resetFields();
   };
 
   const toggleReset = () => {
@@ -54,6 +64,7 @@ export const Login = () => {
     setIsRegistering(false);
     setLocalError('');
     setSuccessMessage('');
+    resetFields();
   };
 
   return (
@@ -88,20 +99,44 @@ export const Login = () => {
         )}
 
         <form onSubmit={handleSubmit} className="login-form">
-          <div className="form-group">
-            <label>Email address</label>
-            <div className="input-wrapper">
-              <Mail size={16} className="input-icon" />
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your Email"
-                required
-                disabled={loading}
-              />
+          {/* Username: shown for both login and register, not for password reset */}
+          {!isResetting && (
+            <div className="form-group">
+              <label>Username</label>
+              <div className="input-wrapper">
+                <User size={16} className="input-icon" />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter your username"
+                  required
+                  disabled={loading}
+                  minLength={3}
+                  maxLength={20}
+                />
+              </div>
             </div>
-          </div>
+          )}
+
+          {/* Gmail: only needed at registration (to create the Firebase account)
+              and at password reset (Firebase needs the real email to send the link) */}
+          {(isRegistering || isResetting) && (
+            <div className="form-group">
+              <label>Gmail address</label>
+              <div className="input-wrapper">
+                <Mail size={16} className="input-icon" />
+                <input
+                  type="email"
+                  value={gmail}
+                  onChange={(e) => setGmail(e.target.value)}
+                  placeholder="example@gmail.com"
+                  required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+          )}
 
           {!isResetting && (
             <div className="form-group">

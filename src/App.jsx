@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './app/context/AuthContext';
 import TaskPage from './app/pages/TaskPage';
 import { Login } from './app/components/auth/Login';
@@ -25,7 +25,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <HashRouter>
       <Routes>
         <Route 
           path="/" 
@@ -44,7 +44,7 @@ function App() {
           element={<Navigate to="/login" replace />} 
         />
       </Routes>
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 

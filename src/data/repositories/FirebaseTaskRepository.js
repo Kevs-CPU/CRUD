@@ -60,8 +60,6 @@ export class FirebaseTaskRepository {
     }
   }
 
-  // ✅ Added: matches the `findByGmail` method declared in TaskRepository interface.
-  // Returns the first task found with a matching gmail, or null if none found.
   async findByGmail(gmail) {
     try {
       if (!gmail) {

@@ -7,19 +7,18 @@ export class UpdateTaskUseCase {
     id,
     title,
     completed,
-    userId, // ✅ Added userId parameter
+    userId, 
   }: {
     id: string;
     title?: string;
     completed?: boolean;
-    userId: string; // ✅ Required parameter
+    userId: string; 
   }) {
-    // Validate ID
+
     if (!id?.trim()) {
       throw new Error("Task ID is required.");
     }
 
-    // Validate userId
     if (!userId?.trim()) {
       throw new Error("User ID is required.");
     }
@@ -31,12 +30,10 @@ export class UpdateTaskUseCase {
       throw new Error("Task not found.");
     }
 
-    // ✅ Validate user owns the task (Security)
     if (task.userId !== userId) {
       throw new Error("You do not have permission to update this task.");
     }
 
-    // Validate and update title if provided
     if (title !== undefined) {
       const trimmedTitle = title.trim();
 
@@ -55,12 +52,10 @@ export class UpdateTaskUseCase {
       task.title = trimmedTitle;
     }
 
-    // Update completed status if provided
     if (completed !== undefined) {
       task.completed = completed;
     }
 
-    // Save updated task
     return await this.taskRepository.update(task);
   }
 }

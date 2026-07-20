@@ -20,11 +20,10 @@ import {
   selectFilter,
   selectEditId,
   selectEditText,
-  selectTotalCount,
   selectCompletedCount,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
-import { ClipboardCheck, LogOut, User, Mail, FileText, Check, X } from 'lucide-react';
+import { ClipboardCheck, LogOut, Mail, FileText, Check, X } from 'lucide-react';
 import "./TaskPage.css";
 
 export default function TaskPage() {
@@ -112,7 +111,7 @@ export default function TaskPage() {
   };
 
   const handleDeleteClick = (id) => {
-    if (editId === id) resetEdit();
+    dispatch(clearEdit());
     setDeleteTargetId(id);
     setShowConfirmModal(true);
   };

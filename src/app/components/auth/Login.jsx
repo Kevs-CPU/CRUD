@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Mail, Lock, Eye, EyeOff, AlertTriangle, CheckCircle2, ClipboardCheck } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './Login.css';
@@ -14,7 +15,21 @@ export const Login = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
 
+  // Floating "toast" notification shown after a successful registration
+  const [toast, setToast] = useState({ visible: false, message: '' });
+
   const { login, register, resetPassword } = useAuth();
+  const navigate = useNavigate();
+
+  // Auto-hide the toast after a few seconds
+  useEffect(() => {
+    if (toast.visible) {
+      const timer = setTimeout(() => {
+        setToast({ visible: false, message: '' });
+      }, 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast.visible]);
 
   const resetFields = () => {
     setUsername('');
@@ -38,14 +53,26 @@ export const Login = () => {
       }
 
       if (isRegistering) {
-        // Register needs username + gmail + password
         await register(username, gmail, password);
+
+        // 1. Show the "you are registered" notification
+        setToast({ visible: true, message: 'You are registered! Please log in.' });
+
+        // 2. Reset the form and switch back to the login view
+        resetFields();
+        setIsRegistering(false);
+        setLocalError('');
+        setSuccessMessage('');
+
+        // 3. Make sure the user lands on the /login route
+        navigate('/login');
       } else {
-        // Login only needs username + password
         await login(username, password);
       }
+
     } catch (error) {
       setLocalError(error.message);
+      setSuccessMessage('');
     } finally {
       setLoading(false);
     }
@@ -69,12 +96,35 @@ export const Login = () => {
 
   return (
     <div className="login-container">
+      {/* Notification: plain green text, no box/background */}
+      {toast.visible && (
+        <div
+          role="status"
+          style={{
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            color: '#15803d',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            zIndex: 1000,
+            fontSize: '14px',
+            fontWeight: 600,
+          }}
+        >
+          <CheckCircle2 size={16} />
+          <span>{toast.message}</span>
+        </div>
+      )}
+
       <div className="login-card">
         <div className="login-header">
           <span className="login-icon">
             <ClipboardCheck size={24} strokeWidth={2} />
           </span>
-          <h2>Log in now</h2>
+          <h2>{isResetting ? 'Reset Password' : isRegistering ? 'Create Account' : 'Log in now'}</h2>
           <p>
             {isResetting
               ? 'Reset your password'
@@ -101,14 +151,16 @@ export const Login = () => {
         </div>
 
         <form onSubmit={handleSubmit} className="login-form">
-          {/* Username: shown for both login and register, not for password reset */}
           {!isResetting && (
             <div className="form-group">
-              <label>Username</label>
+              <label htmlFor="username">Username</label>
               <div className="input-wrapper">
                 <User size={16} className="input-icon" />
                 <input
+                  id="username"
+                  name="username"
                   type="text"
+                  autoComplete="username"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   placeholder="Enter your username"
@@ -121,15 +173,16 @@ export const Login = () => {
             </div>
           )}
 
-          {/* Gmail: only needed at registration (to create the Firebase account)
-              and at password reset (Firebase needs the real email to send the link) */}
           {(isRegistering || isResetting) && (
             <div className="form-group">
-              <label>Gmail address</label>
+              <label htmlFor="gmail">Gmail address</label>
               <div className="input-wrapper">
                 <Mail size={16} className="input-icon" />
                 <input
+                  id="gmail"
+                  name="gmail"
                   type="email"
+                  autoComplete="email"
                   value={gmail}
                   onChange={(e) => setGmail(e.target.value)}
                   placeholder="example@gmail.com"
@@ -142,12 +195,15 @@ export const Login = () => {
 
           {!isResetting && (
             <div className="form-group">
-              <label>Password</label>
+              <label htmlFor="password">Password</label>
               <div className="input-wrapper">
                 <Lock size={16} className="input-icon" />
                 <input
+                  id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   className="has-toggle"
+                  autoComplete={isRegistering ? 'new-password' : 'current-password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"

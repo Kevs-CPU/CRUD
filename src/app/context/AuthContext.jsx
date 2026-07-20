@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -30,8 +30,18 @@ export const AuthProvider = ({ children }) => {
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
 
+  // While true, onAuthStateChanged ignores the auto-login/sign-out events
+  // that Firebase fires internally during createUserWithEmailAndPassword + signOut.
+  // This stops the brief "flash of TaskPage" after registering.
+  const registeringRef = useRef(false);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      // Ignore the transient auth events that happen mid-registration
+      if (registeringRef.current) {
+        return;
+      }
+
       if (firebaseUser) {
         setUser(firebaseUser);
 
@@ -113,6 +123,10 @@ export const AuthProvider = ({ children }) => {
 
     const usernameLower = cleanUsername.toLowerCase();
 
+    // Block the auth-state listener from reacting until we're fully done
+    // (this is what stops the "flash of TaskPage then back to login" glitch)
+    registeringRef.current = true;
+
     try {
       const usernameDoc = await getDoc(doc(db, 'usernames', usernameLower));
       if (usernameDoc.exists()) {
@@ -133,13 +147,24 @@ export const AuthProvider = ({ children }) => {
 
       await saveUserProfile(firebaseUser.uid, cleanUsername, cleanGmail);
 
-      const updatedUser = { ...firebaseUser, displayName: cleanUsername };
-      setUser(updatedUser);
+      await signOut(auth);
 
-      return updatedUser;
+      setUser(null);
+      setUserProfile(null);
+      resetVerificationState();
+
+      return {
+        success: true,
+        message: '✅ Registration successful! Please login with your credentials.',
+        user: firebaseUser
+      };
+
     } catch (error) {
       console.error('Registration error:', error);
       throw new Error(error.message);
+    } finally {
+      // Safe to let the listener react to auth changes again
+      registeringRef.current = false;
     }
   };
 
@@ -153,6 +178,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       const { email } = usernameDoc.data();
+      
       const result = await signInWithEmailAndPassword(auth, email, password);
 
       try {
@@ -165,6 +191,7 @@ export const AuthProvider = ({ children }) => {
       }
 
       return result.user;
+      
     } catch (error) {
       console.error('Login error:', error);
       throw new Error(error.message);

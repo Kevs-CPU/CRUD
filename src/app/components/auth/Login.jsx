@@ -84,19 +84,21 @@ export const Login = () => {
           </p>
         </div>
 
-        {localError && (
-          <div className="login-error">
-            <AlertTriangle size={16} />
-            <span>{localError}</span>
-          </div>
-        )}
+        <div className="message-slot">
+          {localError && (
+            <div className="login-error">
+              <AlertTriangle size={16} />
+              <span>{localError}</span>
+            </div>
+          )}
 
-        {successMessage && (
-          <div className="login-success">
-            <CheckCircle2 size={16} />
-            <span>{successMessage}</span>
-          </div>
-        )}
+          {successMessage && (
+            <div className="login-success">
+              <CheckCircle2 size={16} />
+              <span>{successMessage}</span>
+            </div>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="login-form">
           {/* Username: shown for both login and register, not for password reset */}

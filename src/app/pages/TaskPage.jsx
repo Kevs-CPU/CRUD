@@ -24,7 +24,7 @@ import {
   selectCompletedCount,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
-import { ClipboardCheck, Menu, LogOut, User, Mail, Check, X } from 'lucide-react';
+import { ClipboardCheck, LogOut, User, Mail, FileText, Check, X } from 'lucide-react';
 import "./TaskPage.css";
 
 export default function TaskPage() {
@@ -45,7 +45,6 @@ export default function TaskPage() {
   const [showAddBar, setShowAddBar] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState(null);
 
@@ -204,27 +203,15 @@ export default function TaskPage() {
             {activeCount > 0 && (
               <span className="stat-badge">{activeCount} pending</span>
             )}
-            <div className="menu-container">
-              <button
-                className="menu-btn"
-                onClick={() => setShowMenu(!showMenu)}
-                aria-label="Menu"
-              >
-                <Menu size={20} />
-              </button>
-              {showMenu && (
-                <div className="menu-dropdown">
-                  <button
-                    className="menu-item"
-                    onClick={handleLogout}
-                    disabled={isLoggingOut}
-                  >
-                    <LogOut size={16} />
-                    {isLoggingOut ? "Logging out..." : "Logout"}
-                  </button>
-                </div>
-              )}
-            </div>
+            <button
+              className="logout-btn"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              aria-label="Logout"
+            >
+              <LogOut size={16} />
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </button>
           </div>
         </div>
       </header>
@@ -249,13 +236,6 @@ export default function TaskPage() {
               <span className="add-bar-icon">📝</span>
             </div>
             <span className="add-bar-title">Add New Task</span>
-            <button
-              className="add-bar-close"
-              onClick={handleClose}
-              aria-label="Close"
-            >
-              <X size={18} />
-            </button>
           </div>
 
           <div className="add-bar-body">
@@ -283,6 +263,7 @@ export default function TaskPage() {
                 Task Description <span className="required">*</span>
               </label>
               <div className="input-wrapper">
+                <FileText size={16} className="input-icon" />
                 <input
                   className={`form-input ${error ? "error" : ""}`}
                   id="taskInput"
@@ -343,13 +324,6 @@ export default function TaskPage() {
                 <span className="modal-icon">🗑</span>
                 <h3>Delete Task</h3>
               </div>
-              <button
-                className="modal-close"
-                onClick={handleCancelDelete}
-                aria-label="Close"
-              >
-                <X size={18} />
-              </button>
             </div>
             <div className="modal-body">
               <p className="modal-message">Are you sure you want to delete this task?</p>

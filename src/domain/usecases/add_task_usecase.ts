@@ -1,9 +1,19 @@
 import { Task } from "../entities/Task";
 import { TaskRepository } from "../repositories/TaskRepository";
 import { v4 as uuidv4 } from "uuid";
+import { auth } from "../../firebase/config";
 
 export class AddTaskUseCase {
   constructor(private readonly taskRepository: TaskRepository) {}
+
+  private getCurrentUser(): Promise<any> {
+    return new Promise((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
 
   private validateGmail(email: string): boolean {
     const gmailRegex = /^[a-zA-Z0-9._%+-]+@gmail\.com$/;
@@ -11,57 +21,53 @@ export class AddTaskUseCase {
   }
 
   async execute({
-    userId,
-    username,
     gmail,
     title,
-    currentUserEmail,
   }: {
-    userId: string;
-    username: string;
     gmail: string;
     title: string;
-    currentUserEmail: string;
   }): Promise<Task> {
-
-    // Validate authenticated user
-    if (!userId.trim()) {
-      throw new Error("User ID is required.");
+    const currentUser = await this.getCurrentUser();
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated. Please log in again.');
     }
 
-    if (!username.trim()) {
-      throw new Error("Username is required.");
+    if (!currentUser.uid) {
+      throw new Error('User ID is required.');
     }
+
+    const cleanGmail = gmail.trim();
+    const cleanTitle = title.trim();
 
     // Validate Gmail
-    if (!gmail.trim()) {
+    if (!cleanGmail) {
       throw new Error("Gmail address is required.");
     }
 
-    if (!this.validateGmail(gmail.trim())) {
+    if (!this.validateGmail(cleanGmail)) {
       throw new Error(
         "Please enter a valid Gmail address (example@gmail.com)."
       );
     }
 
     // Verify Gmail matches logged-in account
-    if (gmail.trim().toLowerCase() !== currentUserEmail.trim().toLowerCase()) {
+    if (cleanGmail.toLowerCase() !== currentUser.email?.toLowerCase()) {
       throw new Error(
         "The entered Gmail does not match the logged-in account."
       );
     }
 
-    // Validate task title
-    if (!title.trim()) {
+    if (!cleanTitle) {
       throw new Error("Task description is required.");
     }
 
     const task: Task = {
       id: uuidv4(),
-      userId,
-      username,
-      gmail: gmail.trim().toLowerCase(),
-      title: title.trim(),
+      userId: currentUser.uid,
+      username: currentUser.displayName || currentUser.email?.split('@')[0] || 'User',
+      gmail: cleanGmail.toLowerCase(),
+      title: cleanTitle,
       completed: false,
     };
 

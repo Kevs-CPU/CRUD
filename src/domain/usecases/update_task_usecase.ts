@@ -1,26 +1,40 @@
+import { Task } from "../entities/Task";
 import { TaskRepository } from "../repositories/TaskRepository";
+import { auth } from "../../firebase/config";
 
 export class UpdateTaskUseCase {
   constructor(private readonly taskRepository: TaskRepository) {}
+
+  private getCurrentUser(): Promise<any> {
+    return new Promise((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
 
   async execute({
     id,
     title,
     completed,
-    userId, 
   }: {
     id: string;
     title?: string;
     completed?: boolean;
-    userId: string; 
-  }) {
+  }): Promise<Task> {
+    const currentUser = await this.getCurrentUser();
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated');
+    }
+
+    if (!currentUser.uid) {
+      throw new Error('User ID is required.');
+    }
 
     if (!id?.trim()) {
       throw new Error("Task ID is required.");
-    }
-
-    if (!userId?.trim()) {
-      throw new Error("User ID is required.");
     }
 
     // Get existing task
@@ -30,7 +44,7 @@ export class UpdateTaskUseCase {
       throw new Error("Task not found.");
     }
 
-    if (task.userId !== userId) {
+    if (task.userId !== currentUser.uid) {
       throw new Error("You do not have permission to update this task.");
     }
 

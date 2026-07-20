@@ -14,14 +14,11 @@ export const Login = () => {
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-
-  // Floating "toast" notification shown after a successful registration
   const [toast, setToast] = useState({ visible: false, message: '' });
 
   const { login, register, resetPassword } = useAuth();
   const navigate = useNavigate();
 
-  // Auto-hide the toast after a few seconds
   useEffect(() => {
     if (toast.visible) {
       const timer = setTimeout(() => {
@@ -53,19 +50,19 @@ export const Login = () => {
       }
 
       if (isRegistering) {
-        await register(username, gmail, password);
+        const result = await register(username, gmail, password);
 
-        // 1. Show the "you are registered" notification
-        setToast({ visible: true, message: 'You are registered! Please log in.' });
+        // Show text-only notification
+        setToast({ visible: true, message: result.message || 'You are registered! Please log in.' });
 
-        // 2. Reset the form and switch back to the login view
         resetFields();
         setIsRegistering(false);
         setLocalError('');
         setSuccessMessage('');
 
-        // 3. Make sure the user lands on the /login route
-        navigate('/login');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
       } else {
         await login(username, password);
       }
@@ -96,7 +93,7 @@ export const Login = () => {
 
   return (
     <div className="login-container">
-      {/* Notification: plain green text, no box/background */}
+      {/* Text-only notification - NO BOX, NO BACKGROUND */}
       {toast.visible && (
         <div
           role="status"
@@ -108,13 +105,13 @@ export const Login = () => {
             color: '#15803d',
             display: 'flex',
             alignItems: 'center',
-            gap: '6px',
+            gap: '8px',
             zIndex: 1000,
-            fontSize: '14px',
-            fontWeight: 600,
+            fontSize: '16px',
+            fontWeight: 500,
           }}
         >
-          <CheckCircle2 size={16} />
+          <CheckCircle2 size={18} />
           <span>{toast.message}</span>
         </div>
       )}

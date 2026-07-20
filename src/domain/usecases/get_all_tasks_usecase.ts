@@ -1,16 +1,30 @@
-// src/domain/usecases/get_all_tasks_usecase.ts
-
 import { Task } from "../entities/Task";
 import { TaskRepository } from "../repositories/TaskRepository";
+import { auth } from "../../firebase/config";
 
 export class GetAllTasksUseCase {
   constructor(private readonly taskRepository: TaskRepository) {}
 
-  async execute(userId: string): Promise<Task[]> {
-    if (!userId?.trim()) {
-      throw new Error("User ID is required.");
+  private getCurrentUser(): Promise<any> {
+    return new Promise((resolve) => {
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user);
+      });
+    });
+  }
+
+  async execute(): Promise<Task[]> {
+    const currentUser = await this.getCurrentUser();
+    
+    if (!currentUser) {
+      throw new Error('User not authenticated');
     }
 
-    return await this.taskRepository.getAll(userId);
+    if (!currentUser.uid) {
+      throw new Error('User ID is required');
+    }
+
+    return await this.taskRepository.getAll(currentUser.uid);
   }
 }

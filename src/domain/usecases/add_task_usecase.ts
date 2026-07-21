@@ -27,40 +27,34 @@ export class AddTaskUseCase {
     gmail: string;
     title: string;
   }): Promise<Task> {
-    const currentUser = await this.getCurrentUser();
-    
-    if (!currentUser) {
-      throw new Error('User not authenticated. Please log in again.');
-    }
+const currentUser = await this.getCurrentUser();
 
-    if (!currentUser.uid) {
-      throw new Error('User ID is required.');
-    }
+if (!currentUser) {
+  throw new Error('User not authenticated. Please log in again.');
+}
 
-    const cleanGmail = gmail.trim();
-    const cleanTitle = title.trim();
+if (!currentUser.uid) {
+  throw new Error('User ID is required.');
+}
 
-    // Validate Gmail
-    if (!cleanGmail) {
-      throw new Error("Gmail address is required.");
-    }
+const cleanGmail = gmail.trim();
+const cleanTitle = title.trim();
 
-    if (!this.validateGmail(cleanGmail)) {
-      throw new Error(
-        "Please enter a valid Gmail address (example@gmail.com)."
-      );
-    }
+// Validate Gmail
+if (!cleanGmail) {
+  throw new Error("Gmail address is required.");
+}
 
-    // Verify Gmail matches logged-in account
-    if (cleanGmail.toLowerCase() !== currentUser.email?.toLowerCase()) {
-      throw new Error(
-        "Please enter a valid Gmail address."
-      );
-    }
+if (!this.validateGmail(cleanGmail)) {
+  throw new Error(
+    "Please enter a valid Gmail address ending with @gmail.com."
+  );
+}
 
-    if (!cleanTitle) {
-      throw new Error("Task description is required.");
-    }
+// Validate Task
+if (!cleanTitle) {
+  throw new Error("Task description is required.");
+}
 
     const task: Task = {
       id: uuidv4(),

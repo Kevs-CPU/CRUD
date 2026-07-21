@@ -54,7 +54,7 @@ export class AddTaskUseCase {
     // Verify Gmail matches logged-in account
     if (cleanGmail.toLowerCase() !== currentUser.email?.toLowerCase()) {
       throw new Error(
-        "The entered Gmail does not match the logged-in account."
+        "Please enter a valid Gmail address."
       );
     }
 

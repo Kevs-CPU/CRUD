@@ -21,6 +21,7 @@ import {
   selectEditId,
   selectEditText,
   selectCompletedCount,
+  selectTotalCount,
 } from "../redux/task/task.slice";
 import { useAuth } from "../context/AuthContext";
 import { ClipboardCheck, LogOut, Mail, FileText, Check, X } from 'lucide-react';
@@ -38,6 +39,16 @@ export default function TaskPage() {
   const activeCount = useSelector(selectActiveCount);
   const filteredTasks = useSelector(selectFilteredTasks);
   const completedCount = useSelector(selectCompletedCount);
+  const totalCount = useSelector(selectTotalCount);
+
+  // ✅ Debug logs para makita ang counts
+  console.log("[TaskPage] ===== RENDERING WITH COUNTS =====");
+  console.log("[TaskPage] totalCount:", totalCount);
+  console.log("[TaskPage] activeCount:", activeCount);
+  console.log("[TaskPage] completedCount:", completedCount);
+  console.log("[TaskPage] filter:", filter);
+  console.log("[TaskPage] filteredTasks:", filteredTasks.length);
+  console.log("[TaskPage] ===================================");
 
   const [taskInput, setTaskInput] = useState("");
   const [gmailInput, setGmailInput] = useState("");
@@ -50,13 +61,26 @@ export default function TaskPage() {
   const gmailInputRef = useRef(null);
 
   const filterOptions = useMemo(() => [
-    { key: "all", label: "All", count: activeCount },
-    { key: "active", label: "Active", count: activeCount },
-    { key: "completed", label: "Completed", count: completedCount },
-  ], [activeCount, completedCount]);
+    {
+      key: "all",
+      label: "All",
+      count: totalCount,
+    },
+    {
+      key: "active",
+      label: "Active",
+      count: activeCount,
+    },
+    {
+      key: "completed",
+      label: "Completed",
+      count: completedCount,
+    },
+  ], [totalCount, activeCount, completedCount]);
 
   useEffect(() => {
     if (user?.uid) {
+      console.log("[TaskPage] Fetching tasks for user:", user.uid);
       dispatch(fetchTasks());
     }
   }, [dispatch, user?.uid]);
@@ -68,6 +92,7 @@ export default function TaskPage() {
   }, [showAddBar]);
 
   const handleLogout = async () => {
+    console.log("[TaskPage] Dispatching logout");
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
@@ -92,6 +117,7 @@ export default function TaskPage() {
   };
 
   const handleAddTask = async () => {
+    console.log("[TaskPage] Dispatching addTask");
     setIsSubmitting(true);
     try {
       await dispatch(addTask({
@@ -118,6 +144,7 @@ export default function TaskPage() {
 
   const handleConfirmDelete = async () => {
     if (!deleteTargetId) return;
+    console.log("[TaskPage] Dispatching removeTask:", deleteTargetId);
 
     try {
       await dispatch(removeTask(deleteTargetId)).unwrap();
@@ -134,6 +161,7 @@ export default function TaskPage() {
   };
 
   const handleStartEdit = (todo) => {
+    console.log("[TaskPage] Starting edit:", todo.id);
     dispatch(setEditId(todo.id));
     dispatch(setEditText(todo.title));
   };
@@ -144,6 +172,7 @@ export default function TaskPage() {
   };
 
   const handleSaveEdit = async (id) => {
+    console.log("[TaskPage] Dispatching updateTask:", id);
     try {
       await dispatch(updateTask({
         id,
@@ -155,15 +184,26 @@ export default function TaskPage() {
     }
   };
 
+  // ✅ Improved handleToggleComplete with more logs
   const handleToggleComplete = async (id) => {
+    console.log("[TaskPage] 🔵 handleToggleComplete CALLED with id:", id);
+    console.log("[TaskPage] Dispatching toggleTaskComplete:", id);
+    
     try {
-      await dispatch(toggleTaskComplete(id)).unwrap();
+      const result = await dispatch(toggleTaskComplete(id)).unwrap();
+      console.log("[TaskPage] ✅ Toggle successful, result:", result);
+      
+      // Log updated counts after toggle
+      console.log("[TaskPage] 📊 After toggle - activeCount:", activeCount);
+      console.log("[TaskPage] 📊 After toggle - completedCount:", completedCount);
+      console.log("[TaskPage] 📊 After toggle - totalCount:", totalCount);
     } catch (error) {
-      console.error('Toggle task failed:', error);
+      console.error("[TaskPage] ❌ Toggle task failed:", error);
     }
   };
 
   const handleFilterChange = (newFilter) => {
+    console.log("[TaskPage] Filter changed:", newFilter);
     dispatch(setFilter(newFilter));
   };
 
@@ -398,7 +438,11 @@ export default function TaskPage() {
                   <button
                     type="button"
                     className="task-checkbox"
-                    onClick={() => handleToggleComplete(todo.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log("[TaskPage] Checkbox CLICKED for task:", todo.id);
+                      handleToggleComplete(todo.id);
+                    }}
                     aria-label="Mark as complete"
                   />
                 )}

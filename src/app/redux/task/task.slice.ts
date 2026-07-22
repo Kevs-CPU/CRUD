@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, createSelector, PayloadAction } from "@reduxjs/toolkit";
 import { Task } from "../../../domain/entities/Task";
-
 import {
   addTaskUseCase,
   getAllTasksUseCase,
@@ -28,14 +27,17 @@ const initialState: TaskState = {
   editText: "",
 };
 
-// Async Thunks with proper types
 export const fetchTasks = createAsyncThunk<Task[]>(
   'tasks/fetchTasks',
   async (_, { rejectWithValue }) => {
+    console.log("[Redux] fetchTasks started");
+
     try {
       const result = await getAllTasksUseCase.execute();
+      console.log("[Redux] fetchTasks success:", result);
       return result as Task[];
     } catch (error: any) {
+      console.error("[Redux] fetchTasks failed:", error);
       return rejectWithValue(error.message || 'Failed to fetch tasks');
     }
   }
@@ -44,13 +46,17 @@ export const fetchTasks = createAsyncThunk<Task[]>(
 export const addTask = createAsyncThunk<Task, { gmail: string; task: string }>(
   'tasks/addTask',
   async ({ gmail, task }, { rejectWithValue }) => {
+    console.log("[Redux] addTask started:", { gmail, task });
+
     try {
       const result = await addTaskUseCase.execute({
         gmail: gmail,
         title: task,
       });
+      console.log("[Redux] addTask success:", result);
       return result as Task;
     } catch (error: any) {
+      console.error("[Redux] addTask failed:", error);
       return rejectWithValue(error.message || 'Failed to add task');
     }
   }
@@ -62,14 +68,14 @@ export const updateTask = createAsyncThunk<
 >(
   'tasks/updateTask',
   async ({ id, title, completed }, { rejectWithValue }) => {
+    console.log("[Redux] updateTask started:", { id, title, completed });
+
     try {
-      const result = await updateTaskUseCase.execute({ 
-        id, 
-        title, 
-        completed,
-      });
+      const result = await updateTaskUseCase.execute({ id, title, completed });
+      console.log("[Redux] updateTask success:", result);
       return result as Task;
     } catch (error: any) {
+      console.error("[Redux] updateTask failed:", error);
       return rejectWithValue(error.message || 'Failed to update task');
     }
   }
@@ -78,10 +84,14 @@ export const updateTask = createAsyncThunk<
 export const removeTask = createAsyncThunk<string, string>(
   'tasks/removeTask',
   async (id, { rejectWithValue }) => {
+    console.log("[Redux] removeTask started:", id);
+
     try {
       const result = await removeTaskUseCase.execute(id);
+      console.log("[Redux] removeTask success:", result);
       return result as string;
     } catch (error: any) {
+      console.error("[Redux] removeTask failed:", error);
       return rejectWithValue(error.message || 'Failed to remove task');
     }
   }
@@ -90,6 +100,8 @@ export const removeTask = createAsyncThunk<string, string>(
 export const toggleTaskComplete = createAsyncThunk<Task, string>(
   'tasks/toggleTaskComplete',
   async (id, { getState, rejectWithValue }) => {
+    console.log("[Redux] toggleTaskComplete started:", id);
+
     try {
       const state = getState() as { tasks: TaskState };
       const task = state.tasks.tasks.find((t: Task) => t.id === id);
@@ -98,30 +110,42 @@ export const toggleTaskComplete = createAsyncThunk<Task, string>(
         throw new Error('Task not found');
       }
 
+      console.log("[Redux] toggleTaskComplete - toggling from:", {
+        id,
+        currentStatus: task.completed,
+        newStatus: !task.completed,
+      });
+
       const result = await updateTaskUseCase.execute({
         id,
         completed: !task.completed,
       });
 
+      console.log("[Redux] toggleTaskComplete success:", result);
       return result as Task;
     } catch (error: any) {
+      console.error("[Redux] toggleTaskComplete failed:", error);
       return rejectWithValue(error.message || 'Failed to toggle task');
     }
   }
 );
 
-// Base selectors with proper types
+// ==================== SELECTORS ====================
 const selectTasks = (state: { tasks: TaskState }): Task[] => state.tasks.tasks;
 const selectFilterState = (state: { tasks: TaskState }): FilterType => state.tasks.filter;
 
-// Memoized selectors using createSelector
+// ✅ FIXED: "all" filter returns ALL tasks
 export const selectFilteredTasks = createSelector(
   [selectTasks, selectFilterState],
   (tasks: Task[], filter: FilterType): Task[] => {
     if (filter === "completed") {
       return tasks.filter((task: Task) => task.completed);
     }
-    return tasks.filter((task: Task) => !task.completed);
+    if (filter === "active") {
+      return tasks.filter((task: Task) => !task.completed);
+    }
+    // "all" - return all tasks
+    return tasks;
   }
 );
 
@@ -140,13 +164,13 @@ export const selectTotalCount = createSelector(
   (tasks: Task[]): number => tasks.length
 );
 
-// Direct selectors with proper types
 export const selectFilter = (state: { tasks: TaskState }): FilterType => state.tasks.filter;
 export const selectLoading = (state: { tasks: TaskState }): boolean => state.tasks.loading;
 export const selectError = (state: { tasks: TaskState }): string | null => state.tasks.error;
 export const selectEditId = (state: { tasks: TaskState }): string | null => state.tasks.editId;
 export const selectEditText = (state: { tasks: TaskState }): string => state.tasks.editText;
 
+// ==================== SLICE ====================
 const taskSlice = createSlice({
   name: 'tasks',
   initialState,
@@ -180,7 +204,6 @@ const taskSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch Tasks
       .addCase(fetchTasks.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -189,12 +212,16 @@ const taskSlice = createSlice({
         state.loading = false;
         state.tasks = action.payload || [];
         state.error = null;
+        console.log("[Redux] fetchTasks - State updated:", {
+          totalTasks: state.tasks.length,
+          activeTasks: state.tasks.filter(t => !t.completed).length,
+          completedTasks: state.tasks.filter(t => t.completed).length
+        });
       })
       .addCase(fetchTasks.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || 'Failed to fetch tasks';
       })
-      // Add Task
       .addCase(addTask.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -204,13 +231,18 @@ const taskSlice = createSlice({
         if (action.payload) {
           state.tasks.push(action.payload);
           state.error = null;
+          console.log("[Redux] addTask - State updated:", {
+            taskId: action.payload.id,
+            totalTasks: state.tasks.length,
+            activeTasks: state.tasks.filter(t => !t.completed).length,
+            completedTasks: state.tasks.filter(t => t.completed).length
+          });
         }
       })
       .addCase(addTask.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || 'Failed to add task';
       })
-      // Update Task
       .addCase(updateTask.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -225,13 +257,18 @@ const taskSlice = createSlice({
           state.error = null;
           state.editId = null;
           state.editText = '';
+          console.log("[Redux] updateTask - State updated:", {
+            taskId: action.payload.id,
+            totalTasks: state.tasks.length,
+            activeTasks: state.tasks.filter(t => !t.completed).length,
+            completedTasks: state.tasks.filter(t => t.completed).length
+          });
         }
       })
       .addCase(updateTask.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || 'Failed to update task';
       })
-      // Remove Task
       .addCase(removeTask.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -245,13 +282,18 @@ const taskSlice = createSlice({
             state.editId = null;
             state.editText = '';
           }
+          console.log("[Redux] removeTask - State updated:", {
+            removedId: action.payload,
+            totalTasks: state.tasks.length,
+            activeTasks: state.tasks.filter(t => !t.completed).length,
+            completedTasks: state.tasks.filter(t => t.completed).length
+          });
         }
       })
       .addCase(removeTask.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string || 'Failed to remove task';
       })
-      // Toggle Task Complete
       .addCase(toggleTaskComplete.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -264,6 +306,13 @@ const taskSlice = createSlice({
             state.tasks[index] = action.payload;
           }
           state.error = null;
+          console.log("[Redux] toggleTaskComplete - State updated:", {
+            taskId: action.payload.id,
+            completed: action.payload.completed,
+            totalTasks: state.tasks.length,
+            activeTasks: state.tasks.filter(t => !t.completed).length,
+            completedTasks: state.tasks.filter(t => t.completed).length
+          });
         }
       })
       .addCase(toggleTaskComplete.rejected, (state, action) => {

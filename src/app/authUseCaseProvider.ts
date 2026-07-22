@@ -7,6 +7,8 @@ import { GetUserProfileUseCase } from '../domain/usecases/get_user_profile_useca
 import { SaveUserProfileUseCase } from '../domain/usecases/save_user_profile_usecase';
 import { UpdateVerifiedEmailUseCase } from '../domain/usecases/update_verified_email_usecase';
 import { GetCurrentUserUseCase } from '../domain/usecases/get_current_user_usecase';
+import { GetOrCreateUserProfileUseCase } from '../domain/usecases/get_or_create_user_profile_usecase';
+import { GetUsernameUseCase } from '../domain/usecases/get_username_usecase';
 
 export const authRepository = new FirebaseAuthRepository();
 
@@ -18,3 +20,9 @@ export const getUserProfileUseCase = new GetUserProfileUseCase(authRepository);
 export const saveUserProfileUseCase = new SaveUserProfileUseCase(authRepository);
 export const updateVerifiedEmailUseCase = new UpdateVerifiedEmailUseCase(authRepository);
 export const getCurrentUserUseCase = new GetCurrentUserUseCase(authRepository);
+
+export const getOrCreateUserProfileUseCase = new GetOrCreateUserProfileUseCase(authRepository);
+
+export const getUsernameUseCase = new GetUsernameUseCase();
+
+console.log("[AuthProvider] Auth use cases initialized successfully");

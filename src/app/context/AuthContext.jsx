@@ -1,155 +1,203 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { 
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect
+} from "react";
+
+import {
   registerUseCase,
   loginUseCase,
   logoutUseCase,
   resetPasswordUseCase,
-  getUserProfileUseCase,
-  saveUserProfileUseCase,
   updateVerifiedEmailUseCase,
   getCurrentUserUseCase,
+  getOrCreateUserProfileUseCase,
+  getUsernameUseCase,
   authRepository
-} from "../../app/authUseCaseProvider";
+} from "../authUseCaseProvider";
 
-const AuthContext = createContext();
+console.log("[AuthContext] Loading AuthContext...");
+
+const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
+
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
+
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
+  console.log("[AuthContext] AuthProvider rendering");
+
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [userProfile, setUserProfile] = useState(null);
   const [verifiedEmail, setVerifiedEmail] = useState("");
   const [emailVerified, setEmailVerified] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
+    console.log("[AuthContext] Setting up auth state observer...");
+
     const unsubscribe = authRepository.observeAuthState(async (firebaseUser) => {
-      // Skip auth state updates during registration
-      if (isRegistering) {
-        return;
-      }
+      console.log("[AuthContext] Auth state changed:", {
+        uid: firebaseUser?.uid,
+        email: firebaseUser?.email,
+        displayName: firebaseUser?.displayName
+      });
 
       if (firebaseUser) {
+        console.log("[AuthContext] User logged in:", firebaseUser.uid);
         setUser(firebaseUser);
 
         try {
-          const profile = await getUserProfileUseCase.execute(firebaseUser.uid);
-          if (profile) {
-            setUserProfile(profile);
-          } else {
-            const defaultProfile = {
-              uid: firebaseUser.uid,
-              username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-              email: firebaseUser.email,
-              createdAt: new Date().toISOString()
-            };
-            await saveUserProfileUseCase.execute(firebaseUser.uid, defaultProfile.username, defaultProfile.email);
-            setUserProfile(defaultProfile);
-          }
-        } catch (error) {
-          console.error('Error fetching user profile:', error);
-          setUserProfile({
-            uid: firebaseUser.uid,
-            username: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-            email: firebaseUser.email
+          console.log("[AuthContext] Getting or creating user profile...");
+          const profile = await getOrCreateUserProfileUseCase.execute(firebaseUser);
+          setUserProfile(profile);
+          console.log("[AuthContext] User profile loaded successfully:", {
+            uid: profile?.uid,
+            username: profile?.username,
+            email: profile?.email
           });
+        } catch (error) {
+          console.error("[AuthContext] Failed to load user profile:", error);
+          setUserProfile(null);
         }
       } else {
+        console.log("[AuthContext] No user logged in - clearing state");
         setUser(null);
         setUserProfile(null);
         resetVerificationState();
       }
+
       setLoading(false);
+      console.log("[AuthContext] Loading state set to false");
     });
-    return unsubscribe;
-  }, [isRegistering]);
+
+    return () => {
+      console.log("[AuthContext] Cleaning up auth state observer...");
+      unsubscribe();
+    };
+  }, []);
 
   const resetVerificationState = () => {
+    console.log("[AuthContext] Resetting verification state");
     setVerifiedEmail("");
     setEmailVerified(false);
   };
 
   const register = async (username, gmail, password) => {
-    setIsRegistering(true);
+    console.log("[AuthContext] Register started:", { username, gmail });
+    
     try {
       const result = await registerUseCase.execute(username, gmail, password);
+      console.log("[AuthContext] Register successful");
+      
       setUser(null);
       setUserProfile(null);
       resetVerificationState();
-      // Wait a bit before allowing auth state updates again
-      setTimeout(() => {
-        setIsRegistering(false);
-      }, 2000);
+      
       return result;
     } catch (error) {
-      setIsRegistering(false);
-      console.error('Registration error:', error);
+      console.error("[AuthContext] Registration failed:", error);
       throw new Error(error.message);
     }
   };
 
   const login = async (username, password) => {
+    console.log("[AuthContext] Login started:", { username });
+    
     try {
       const result = await loginUseCase.execute(username, password);
+      console.log("[AuthContext] Login successful:", { uid: result?.uid });
       return result;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("[AuthContext] Login failed:", error);
       throw new Error(error.message);
     }
   };
 
   const logout = async () => {
+    console.log("[AuthContext] Logout started");
+    
     try {
       await logoutUseCase.execute();
+      console.log("[AuthContext] Logout successful");
+      
       setUser(null);
       setUserProfile(null);
       resetVerificationState();
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("[AuthContext] Logout failed:", error);
       throw new Error(error.message);
     }
   };
 
   const resetPassword = async (gmail) => {
+    console.log("[AuthContext] Reset password started:", { gmail });
+    
     try {
       await resetPasswordUseCase.execute(gmail);
+      console.log("[AuthContext] Reset password successful");
     } catch (error) {
-      console.error('Reset password error:', error);
+      console.error("[AuthContext] Reset password failed:", error);
       throw new Error(error.message);
     }
   };
 
   const setVerifiedEmailState = async (email) => {
+    console.log("[AuthContext] Setting verified email:", { 
+      email, 
+      userId: user?.uid 
+    });
+
+    const previousVerifiedEmail = verifiedEmail;
+    const previousEmailVerified = emailVerified;
+
+    console.log("[AuthContext] Updating UI state optimistically");
     setVerifiedEmail(email);
     setEmailVerified(true);
 
-    if (user?.uid) {
-      try {
-        await updateVerifiedEmailUseCase.execute(user.uid, email);
-      } catch (error) {
-        console.error('Error saving verified email:', error);
-      }
+    try {
+      await updateVerifiedEmailUseCase.execute({
+        userId: user?.uid,
+        email: email
+      });
+      
+      console.log("[AuthContext] Verified email processed successfully:", email);
+    } catch (error) {
+      console.error("[AuthContext] Failed to process verified email:", error);
+      
+      console.log("[AuthContext] Rolling back UI state");
+      setVerifiedEmail(previousVerifiedEmail);
+      setEmailVerified(previousEmailVerified);
+      
+      throw error;
     }
   };
 
   const getCurrentUser = async () => {
-    return await getCurrentUserUseCase.execute();
+    console.log("[AuthContext] Getting current user...");
+    try {
+      const user = await getCurrentUserUseCase.execute();
+      console.log("[AuthContext] Current user:", { uid: user?.uid });
+      return user;
+    } catch (error) {
+      console.error("[AuthContext] Failed to get current user:", error);
+      throw error;
+    }
   };
 
   const isAuthenticated = !!user;
 
   const getUsername = () => {
-    if (userProfile?.username) return userProfile.username;
-    if (user?.displayName) return user.displayName;
-    if (user?.email) return user.email.split('@')[0];
-    return 'User';
+    const username = getUsernameUseCase.execute({ userProfile, user });
+    console.log("[AuthContext] getUsername:", username);
+    return username;
   };
 
   const value = {
@@ -158,16 +206,23 @@ export const AuthProvider = ({ children }) => {
     loading,
     verifiedEmail,
     emailVerified,
-    setVerifiedEmailState,
-    resetVerificationState,
+    isAuthenticated,
+    getUsername,
     login,
     register,
     logout,
     resetPassword,
-    isAuthenticated,
-    getUsername,
-    getCurrentUser
+    getCurrentUser,
+    setVerifiedEmailState,
+    resetVerificationState,
   };
+
+  console.log("[AuthContext] AuthProvider value updated:", {
+    isAuthenticated,
+    hasUser: !!user,
+    hasProfile: !!userProfile,
+    loading
+  });
 
   return (
     <AuthContext.Provider value={value}>

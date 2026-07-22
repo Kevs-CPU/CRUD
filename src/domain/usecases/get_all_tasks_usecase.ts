@@ -15,16 +15,46 @@ export class GetAllTasksUseCase {
   }
 
   async execute(): Promise<Task[]> {
-    const currentUser = await this.getCurrentUser();
-    
-    if (!currentUser) {
-      throw new Error('User not authenticated');
-    }
+    console.log("[GetAllTasksUseCase] Started");
 
-    if (!currentUser.uid) {
-      throw new Error('User ID is required');
-    }
+    try {
+      const currentUser = await this.getCurrentUser();
 
-    return await this.taskRepository.getAll(currentUser.uid);
+      console.log(
+        "[GetAllTasksUseCase] Current user:",
+        currentUser?.uid
+      );
+
+      if (!currentUser) {
+        throw new Error("User not authenticated");
+      }
+
+      if (!currentUser.uid) {
+        throw new Error("User ID is required");
+      }
+
+      console.log(
+        "[GetAllTasksUseCase] Fetching tasks for user:",
+        currentUser.uid
+      );
+
+      const tasks = await this.taskRepository.getAll(
+        currentUser.uid
+      );
+
+      console.log(
+        "[GetAllTasksUseCase] Tasks fetched successfully:",
+        tasks
+      );
+
+      return tasks;
+    } catch (error) {
+      console.error(
+        "[GetAllTasksUseCase] Failed to fetch tasks:",
+        error
+      );
+
+      throw error;
+    }
   }
 }
